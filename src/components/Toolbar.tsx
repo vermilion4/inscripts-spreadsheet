@@ -1,0 +1,238 @@
+import React, { useState, useRef } from 'react'
+import actionIcon from '../assets/action.svg'
+import shareIcon from '../assets/share.svg'
+import importIcon from '../assets/import.svg'
+import cellViewIcon from '../assets/cell-view.svg'
+import filterIcon from '../assets/filter.svg'
+import sortIcon from '../assets/sort.svg'
+import hideIcon from '../assets/hide.svg'
+import doubleArrow from '../assets/double-carat.svg'
+import { FiCopy, FiCheck, FiExternalLink, FiUsers, FiMail } from 'react-icons/fi'
+import Tooltip from '../ui/Tooltip'
+import Dropdown from '../ui/Dropdown'
+import Popover from '../ui/Popover'
+
+const ButtonVariants = {
+  default: "text-xs sm:text-sm text-primary px-2 py-1 rounded hover:bg-secondary transition whitespace-nowrap",
+  outlined: "text-xs sm:text-sm text-secondary-two px-3 py-2 hover:bg-secondary transition whitespace-nowrap border border-borderTertiary rounded-md",
+  primary: "text-xs sm:text-sm font-medium px-3 sm:px-6 py-2 rounded-md bg-default text-secondary hover:opacity-90 transition whitespace-nowrap"
+}
+
+interface ToolbarButtonProps {
+  icon: string;
+  label: string;
+  variant?: keyof typeof ButtonVariants;
+  className?: string;
+  onClick?: () => void;
+  isActive?: boolean;
+  showLabelOnMobile?: boolean;
+}
+
+const ToolbarButton = ({ icon, label, variant = 'default', className = '', onClick, isActive = false, showLabelOnMobile = true }: ToolbarButtonProps) => (
+  <Tooltip content={label} position="bottom">
+    <button 
+      className={`flex items-center gap-1 group relative ${ButtonVariants[variant]} ${className} ${isActive ? 'bg-secondary' : ''}`}
+      onClick={onClick}
+      type="button"
+    >
+      <img src={icon} alt={label} className={`w-4 h-4 ${!showLabelOnMobile ? 'mx-auto' : ''}`} />
+      <span className={`${showLabelOnMobile ? 'inline sm:inline' : 'hidden sm:inline'}`}>
+        {label}
+      </span>
+    </button>
+  </Tooltip>
+)
+
+const Toolbar = () => {
+  const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
+  const [sharePopoverOpen, setSharePopoverOpen] = useState(false)
+  const [activeTools, setActiveTools] = useState<Set<string>>(new Set())
+  const [copied, setCopied] = useState(false)
+
+  const shareButtonRef = useRef<HTMLButtonElement>(null)
+
+  const leftTools = [
+    { icon: hideIcon, label: "Hide fields" },
+    { icon: sortIcon, label: "Sort" },
+    { icon: filterIcon, label: "Filter" },
+    { icon: cellViewIcon, label: "Cell view" }
+  ]
+
+  // Right tools: no active state, just alert on click
+  const rightTools = [
+    { icon: importIcon, label: "Import", variant: "outlined" as const, onClick: () => alert('Import clicked') },
+    { icon: importIcon, label: "Export", variant: "outlined" as const, className: "[&>img]:rotate-180", onClick: () => alert('Export clicked') }
+  ]
+
+  const handleToolClick = (toolLabel: string) => {
+    const newActiveTools = new Set(activeTools)
+    if (newActiveTools.has(toolLabel)) {
+      newActiveTools.delete(toolLabel)
+    } else {
+      newActiveTools.add(toolLabel)
+    }
+    setActiveTools(newActiveTools)
+    console.log(`${toolLabel} ${newActiveTools.has(toolLabel) ? 'activated' : 'deactivated'}`)
+  }
+
+  const handleToolbarToggle = () => {
+    setIsToolbarCollapsed(!isToolbarCollapsed)
+  }
+
+  const handleShareClick = () => {
+    setSharePopoverOpen((open) => !open)
+  }
+
+  const handleNewAction = () => {
+    alert('New Action clicked')
+  }
+
+  const handleCopyLink = async () => {
+    const shareLink = "https://sheets.example.com/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+    try {
+      await navigator.clipboard.writeText(shareLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy link:', err)
+    }
+  }
+
+  const mobileToolsItems = leftTools.map((tool) => ({
+    id: tool.label,
+    label: tool.label,
+    icon: <img src={tool.icon} alt={tool.label} className="w-4 h-4" />,
+    onClick: () => handleToolClick(tool.label)
+  }))
+
+  const shareLink = "https://sheets.example.com/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+
+  return (
+    <div className="h-14 px-4 py-2 flex items-center bg-white border-b border-borderTertiary relative">
+      <div className='flex items-center justify-between w-full gap-2 lg:gap-4'>
+        {/* Left section */}
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+          {/* Tool bar toggle/dropdown */}
+          <div className="lg:hidden">
+            <Dropdown
+              trigger={
+                <button 
+                  className="flex items-center gap-1.5 text-sm text-primary px-2 py-1 rounded hover:bg-secondary transition whitespace-nowrap"
+                  type="button"
+                >
+                  <span className="inline">Tool bar</span>
+                </button>
+              }
+              items={mobileToolsItems}
+              width="w-40"
+              position='right'
+            />
+          </div>
+          <button 
+            className="hidden lg:flex items-center gap-1.5 text-sm text-primary px-2 py-1 rounded hover:bg-secondary transition whitespace-nowrap"
+            onClick={handleToolbarToggle}
+            type="button"
+          >
+            <span className="inline">Tool bar</span>
+            <img 
+              src={doubleArrow} 
+              alt="toggle" 
+              className={`w-2.5 h-2.5 transition-transform ${isToolbarCollapsed ? 'rotate-180' : ''}`} 
+            />
+          </button>
+          {/* Divider */}
+          <div className="h-6 w-px border-r border-borderTertiary"></div>
+          {/* Desktop tools */}
+          <div className={`hidden lg:flex items-center gap-1 transition-all duration-300 ${isToolbarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}> 
+            {leftTools.map((tool, index) => (
+              <ToolbarButton 
+                key={index}
+                icon={tool.icon} 
+                label={tool.label}
+                onClick={() => handleToolClick(tool.label)}
+                isActive={activeTools.has(tool.label)}
+              />
+            ))}
+          </div>
+        </div>
+        {/* Right section */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Desktop right tools */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {rightTools.map((tool, index) => (
+              <ToolbarButton 
+                key={index}
+                icon={tool.icon} 
+                label={tool.label}
+                variant={tool.variant}
+                className={tool.className}
+                onClick={tool.onClick}
+                showLabelOnMobile={false}
+              />
+            ))}
+          </div>
+          {/* Share button with popover */}
+          <div className="relative">
+            <Tooltip content="Share" position="bottom">
+              <button 
+                ref={shareButtonRef}
+                className="flex items-center gap-1 text-xs sm:text-sm text-secondary-two px-3 py-2 hover:bg-secondary transition whitespace-nowrap border border-borderTertiary rounded-md"
+                onClick={handleShareClick}
+                type="button"
+              >
+                <img src={shareIcon} alt="Share" className="w-4 h-4" />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+            </Tooltip>
+            <Popover 
+              open={sharePopoverOpen}
+              anchorRef={shareButtonRef}
+              onClose={() => setSharePopoverOpen(false)}
+              minWidth={320}
+            >
+              <div className="p-4 space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-primary mb-2">Share "Spreadsheet 3"</h3>
+                  <p className="text-xs text-tertiary">Anyone with the link can view this spreadsheet</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-primary">Link to share</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="text" 
+                      value={shareLink}
+                      readOnly
+                      className="flex-1 px-3 py-2 text-xs bg-secondary border border-borderTertiary rounded-md text-tertiary"
+                    />
+                    <button 
+                      onClick={handleCopyLink}
+                      className="flex items-center gap-1 px-3 py-2 text-xs bg-default text-secondary rounded-md hover:opacity-90 transition"
+                    >
+                      {copied ? <FiCheck className="w-3 h-3" /> : <FiCopy className="w-3 h-3" />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 pt-2">
+                  <button className="flex items-center gap-2 px-3 py-2 rounded hover:bg-secondary text-xs text-primary" onClick={() => alert('Share with specific people')}><FiUsers className="w-4 h-4" /> Share with specific people</button>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded hover:bg-secondary text-xs text-primary" onClick={() => alert('Send via email')}><FiMail className="w-4 h-4" /> Send via email</button>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded hover:bg-secondary text-xs text-primary" onClick={() => alert('Get embed code')}><FiExternalLink className="w-4 h-4" /> Get embed code</button>
+                </div>
+              </div>
+            </Popover>
+          </div>
+          {/* New Action button */}
+          <ToolbarButton 
+            icon={actionIcon} 
+            label="New Action" 
+            variant="primary"
+            onClick={handleNewAction}
+            showLabelOnMobile={true}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Toolbar
