@@ -73,7 +73,7 @@ const Footer = () => {
   }, [sheets])
 
   return (
-    <footer className='h-12 fixed bottom-0 w-full bg-white border-t border-borderTertiary pl-4 md:pl-8 pt-1'>
+    <footer className='h-12 fixed bottom-0 w-full bg-white border-t border-borderTertiary pl-4 md:pl-8 pt-1 z-50'>
       <div className='flex items-center h-full'>
         {/* Left scroll button */}
         {showLeftArrow && (
