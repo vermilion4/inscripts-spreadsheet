@@ -5,14 +5,18 @@ import {
   flexRender,
   ColumnDef,
 } from '@tanstack/react-table';
+import { IoLinkSharp } from "react-icons/io5";
+import { GrPowerCycle } from "react-icons/gr";
 import {ReactComponent as AssignedIcon} from '../assets/assigned.svg';
 import {ReactComponent as SubmittedIcon} from '../assets/calendar.svg';
 import {ReactComponent as StatusIcon} from '../assets/status.svg';
 import {ReactComponent as SubmitterIcon} from '../assets/user.svg';
 import {ReactComponent as URLIcon} from '../assets/globe.svg';
 import {ReactComponent as JobIcon} from '../assets/job.svg';
+import {ReactComponent as ActionIcon} from '../assets/action.svg'
 
 import CaratDown from '../assets/carat-down.svg';
+import Ellipsis from '../assets/ellipsis.svg'
 
 const prefilledRows = [
   {
@@ -100,6 +104,19 @@ const priorityColors: Record<string, string> = {
   'Low': 'text-[#1A8CFF]',
 };
 
+// Helper to format value as lakh
+function formatLakh(value: string) {
+  if (!value) return '';
+  const numericValue = value.replace(/[^\d.]/g, '');
+  // Format with commas for thousands
+  const formattedValue = Number(numericValue).toLocaleString('en-US');
+  return (
+    <>
+      {formattedValue} <span className="text-disabledPrimary">₹</span>
+    </>
+  );
+}
+
 function EditableCell({
   value,
   rowIndex,
@@ -110,6 +127,8 @@ function EditableCell({
   isPriority,
   isSelected,
   onSelect,
+  renderValue,
+  align,
 }: {
   value: string;
   rowIndex: number;
@@ -120,6 +139,8 @@ function EditableCell({
   isPriority?: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
+  renderValue?: (value: string) => React.ReactNode;
+  align?: 'left' | 'right' | 'center';
 }) {
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
@@ -187,7 +208,7 @@ function EditableCell({
       return (
         <select
           ref={inputRef as any}
-          className={`px-2 py-1 rounded-full text-xs font-medium w-full border-0 outline-none ${statusColors[inputValue] || ''}`}
+          className={`px-2 py-1 rounded-full text-xs font-medium mx-auto outline-none border border-borderTertiary w-[90%] flex ${statusColors[inputValue] || ''}`}
           value={inputValue}
           onChange={e => {
             setInputValue(e.target.value);
@@ -214,7 +235,7 @@ function EditableCell({
       return (
         <select
           ref={inputRef as any}
-          className={`font-semibold w-full border-0 outline-none bg-transparent ${priorityColors[inputValue] || ''}`}
+          className={`font-semibold w-[90%] border-0 outline-none bg-transparent mx-auto flex ${priorityColors[inputValue] || ''}`}
           value={inputValue}
           onChange={e => {
             setInputValue(e.target.value);
@@ -239,7 +260,7 @@ function EditableCell({
     return (
       <input
         ref={inputRef}
-        className="w-full h-full px-2 py-0.5 border border-[#6C8B70] focus:outline-none bg-white shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0px_4px_-2px_#0A6E3D99]"
+        className={`w-full h-full px-2 py-0.5 border border-[#6C8B70] focus:outline-none bg-white shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0px_4px_-2px_#0A6E3D99] ${align === 'right' ? 'text-right' : ''}`}
         value={inputValue}
         onChange={e => setInputValue(e.target.value)}
         onBlur={finishEditing}
@@ -288,19 +309,23 @@ function EditableCell({
       );
     }
 
+    if (renderValue) {
+      return renderValue(value);
+    }
+
     return value || '\u00A0';
   };
 
   return (
     <div
       ref={displayRef}
-      className={`w-full h-full flex items-center px-2 py-1 cursor-pointer  ${isSelected ? 'border border-[#6C8B70] shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0px_4px_-2px_#0A6E3D99] bg-white ' : 'hover:bg-[#E8F0E9]'}`}
+      className={`w-full h-full flex items-center px-2 py-1 cursor-pointer ${isSelected ? 'border border-[#6C8B70] shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0px_4px_-2px_#0A6E3D99] bg-white ' : 'hover:bg-[#E8F0E9]'} ${align === 'right' ? 'justify-end' : ''}`}
       onClick={handleCellClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <span className="block w-full truncate">
+      <span className={`block w-full truncate ${align === 'right' ? 'text-right' : ''}`}>
         {cellContent()}
       </span>
     </div>
@@ -374,9 +399,10 @@ export default function SpreadsheetTable() {
             onChange={handleCellChange}
             isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'submitted'}
             onSelect={() => handleCellSelect(info.row.index, 'submitted')}
+            align="right"
           />
         ),
-        size: 144,
+        size: 124,
       },
       {
         accessorKey: 'status',
@@ -423,7 +449,7 @@ export default function SpreadsheetTable() {
             onSelect={() => handleCellSelect(info.row.index, 'submitter')}
           />
         ),
-        size: 150,
+        size: 120,
       },
       {
         accessorKey: 'url',
@@ -467,7 +493,7 @@ export default function SpreadsheetTable() {
             onSelect={() => handleCellSelect(info.row.index, 'assigned')}
           />
         ),
-        size: 150,
+        size: 120,
       },
       {
         accessorKey: 'priority',
@@ -504,6 +530,7 @@ export default function SpreadsheetTable() {
             onChange={handleCellChange}
             isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'due'}
             onSelect={() => handleCellSelect(info.row.index, 'due')}
+            align="right"
           />
         ),
         size: 120,
@@ -523,9 +550,11 @@ export default function SpreadsheetTable() {
             onChange={handleCellChange}
             isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'value'}
             onSelect={() => handleCellSelect(info.row.index, 'value')}
+            renderValue={formatLakh}
+            align="right"
           />
         ),
-        size: 120,
+        size: 160,
       },
     ],
     [selectedCell]
@@ -540,10 +569,49 @@ export default function SpreadsheetTable() {
   return (
     <div className="overflow-x-auto bg-white">
       <table className="w-full relative" style={{ borderCollapse: 'collapse', minWidth: '1200px' }}>
-        <thead className="bg-gray-50">
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header, index) => (
+        <thead>
+          {/* Custom top header row */}
+          <tr>
+            <th className="bg-transparent border-none p-0" style={{ width: 32 }}></th>
+            {/* Q3 Financial Overview spanning Job Request, Submitted, Status, Submitter */}
+            <th colSpan={4} className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none">
+              <div className="flex items-center gap-3 h-6">
+                <span className="text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal">
+                <IoLinkSharp size={16} color='#1A8CFF' />
+                  Q3 Financial Overview</span>
+                  <GrPowerCycle className='animate-spin' color='#FA6736' size={16} />
+              </div>
+            </th>
+            <th className="bg-transparent border-none p-0" style={{ width: 180 }}></th>
+            {/* ABC above Assigned */}
+            <th className="bg-[#D2E0D4] text-[#505450] font-medium text-sm h-8 px-4 text-center border-none">
+              <span className="flex items-center justify-center gap-2 whitespace-nowrap">
+                <ActionIcon className='w-3.5 h-3.5 custom-fill' />
+                ABC
+                <img src={Ellipsis} alt="ellipsis" />
+                </span>
+            </th>
+            {/* Answer a question spanning Priority and Due Date */}
+            <th colSpan={2} className="bg-[#DCCFFC] text-textDark font-medium text-sm h-8 px-4 text-center border-none">
+              <span className="flex items-center justify-center whitespace-nowrap gap-2">
+                <ActionIcon className='w-3.5 h-3.5' />
+                Answer a question
+                <img src={Ellipsis} alt="ellipsis" />
+                </span>
+            </th>
+            {/* Extract above Est. Value */}
+            <th className="bg-[#FAC2AF] text-[#695149] font-medium text-sm h-8 px-4 text-center border-none">
+              <span className="flex items-center justify-center gap-2 whitespace-nowrap">
+                <ActionIcon className='w-3.5 h-3.5' />
+                Extract
+                <img src={Ellipsis} alt="ellipsis" />
+                </span>
+            </th>
+          </tr>
+          {/* Existing column headers */}
+          <tr>
+            {table.getHeaderGroups().map(headerGroup =>
+              headerGroup.headers.map((header, index) => (
                 <th
                   key={header.id}
                   style={{ width: header.getSize() }}
@@ -551,19 +619,19 @@ export default function SpreadsheetTable() {
                     index === 0
                       ? 'text-center text-lg text-disabledPrimary italic font-normal sticky left-0 z-10 after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
                       : index === 6
-                      ? 'text-left px-2 font-semibold bg-[#E8F0E9] text-[#666C66]'
+                      ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
                       : (index === 7 || index === 8)
-                      ? 'text-left px-2 font-semibold bg-[#EAE3FC] text-[#655C80]'
+                      ? 'text-left px-2 font-semibold !bg-[#EAE3FC] text-[#655C80]'
                       : index === 9
-                      ? 'text-left px-2 font-semibold bg-[#FFE9E0] text-[#8C6C62]'
+                      ? 'text-left px-2 font-semibold !bg-[#FFE9E0] text-[#8C6C62]'
                       : 'text-left px-2 text-tertiary font-semibold'
                   }`}
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
-              ))}
-            </tr>
-          ))}
+              ))
+            )}
+          </tr>
         </thead>
         <tbody>
           {table.getRowModel().rows.map(row => (
@@ -572,8 +640,8 @@ export default function SpreadsheetTable() {
                 <td
                   key={cell.id}
                   style={{ width: cell.column.getSize() }}
-                  className={`h-8 border border-[#F6F6F6] text-xs align-middle bg-white hover:bg-blue-50 focus-within:bg-blue-50 ${
-                    index === 0 ? 'text-center text-tertiary sticky left-0 z-10 after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6] px-1' : 'text-left text-primary p-0'
+                  className={`h-8 border border-[#F6F6F6] text-xs align-middle bg-white hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
+                    index === 0 ? 'text-center text-tertiary sticky left-0 z-10 after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]' : 'text-left text-primary p-0'
                   }`}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

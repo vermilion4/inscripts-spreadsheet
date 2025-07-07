@@ -21,7 +21,8 @@ module.exports = {
         'secondary-two': "#545454",
         'borderSecondary': '#E2E2E2',
         'tertiary': '#757575',
-        'default': '#4B6A4F'
+        'default': '#4B6A4F',
+        'textDark': '#463E59'
       }
     },
   },

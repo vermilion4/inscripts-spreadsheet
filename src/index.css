@@ -10,3 +10,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.custom-fill path {
+  fill: #A3ACA3 !important;
+}
