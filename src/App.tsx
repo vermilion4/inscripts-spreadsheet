@@ -119,7 +119,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen">
+    <div className="h-screen bg-[#F6F6F6]">
       <div className="sticky top-0 left-0 right-0 z-50">
         <Header />
         <Toolbar

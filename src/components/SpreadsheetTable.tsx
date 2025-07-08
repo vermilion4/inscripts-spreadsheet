@@ -19,8 +19,17 @@ import { ReactComponent as ActionIcon } from '../assets/action.svg';
 import CaratDown from '../assets/carat-down.svg';
 import Pound from '../assets/pound.svg';
 import Ellipsis from '../assets/ellipsis.svg';
-import { FiPlus } from 'react-icons/fi';
+import {
+  FiPlus,
+  FiSettings,
+  FiTrash2,
+  FiEdit3,
+  FiCopy,
+  FiDownload,
+  FiUpload,
+} from 'react-icons/fi';
 import { SheetData } from '../constants/SheetData';
+import Dropdown from '../ui/Dropdown';
 
 interface SpreadsheetTableProps {
   sheetData?: SheetData;
@@ -69,6 +78,40 @@ const priorityColors: Record<string, string> = {
   Medium: 'text-[#C29210]',
   Low: 'text-[#1A8CFF]',
 };
+
+// Common dropdown items for all sections
+const createDropdownItems = (prefix: string) => [
+  {
+    id: `${prefix}-edit`,
+    label: 'Edit',
+    icon: <FiEdit3 size={16} />,
+    onClick: () => alert('Edit clicked'),
+  },
+  {
+    id: `${prefix}-copy`,
+    label: 'Copy',
+    icon: <FiCopy size={16} />,
+    onClick: () => alert('Copy clicked'),
+  },
+  {
+    id: `${prefix}-download`,
+    label: 'Download',
+    icon: <FiDownload size={16} />,
+    onClick: () => alert('Download clicked'),
+  },
+  {
+    id: `${prefix}-upload`,
+    label: 'Upload',
+    icon: <FiUpload size={16} />,
+    onClick: () => alert('Upload clicked'),
+  },
+  {
+    id: `${prefix}-delete`,
+    label: 'Delete',
+    icon: <FiTrash2 size={16} />,
+    onClick: () => alert('Delete clicked'),
+  },
+];
 
 // Helper to format value as lakh
 function formatLakh(value: string) {
@@ -316,6 +359,61 @@ function EditableCell({
   );
 }
 
+// Helper function to create column header with icon and dropdown
+const createColumnHeader = (
+  icon: React.ReactNode,
+  title: string,
+  onColumnSelect: (columnId: string) => void,
+  columnId: string
+) => (
+  <div
+    className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
+    onClick={() => onColumnSelect(columnId)}
+  >
+    <span className="flex items-center gap-1">
+      {icon}
+      {title}
+    </span>
+    <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
+  </div>
+);
+
+// Helper function to create simple column header
+const createSimpleHeader = (title: string, icon?: React.ReactNode) => (
+  <div className="flex items-center gap-1">
+    {icon}
+    {title}
+  </div>
+);
+
+// Helper function to create EditableCell with common props
+const createEditableCell = (
+  info: any,
+  columnId: string,
+  handleCellChange: (row: number, column: string, value: string) => void,
+  handleCellSelect: (row: number, column: string) => void,
+  selectedCell: { row: number; column: string } | null,
+  options: {
+    isUrl?: boolean;
+    isStatus?: boolean;
+    isPriority?: boolean;
+    renderValue?: (value: string) => React.ReactNode;
+    align?: 'left' | 'right' | 'center';
+  } = {}
+) => (
+  <EditableCell
+    value={(info.getValue() as string) || ''}
+    rowIndex={info.row.index}
+    columnId={columnId}
+    onChange={handleCellChange}
+    isSelected={
+      selectedCell?.row === info.row.index && selectedCell?.column === columnId
+    }
+    onSelect={() => handleCellSelect(info.row.index, columnId)}
+    {...options}
+  />
+);
+
 export default function SpreadsheetTable({
   sheetData,
   onDataChange,
@@ -333,6 +431,7 @@ export default function SpreadsheetTable({
   const [extraColumns, setExtraColumns] = useState<
     { id: string; title: string }[]
   >(sheetData?.extraColumns || []);
+  const [copiedTitle, setCopiedTitle] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevExtraColumnsLength = useRef(0);
 
@@ -347,6 +446,18 @@ export default function SpreadsheetTable({
       setExtraColumns([]);
     }
   }, [sheetData]);
+
+  // Handle copying sheet title
+  const handleCopyTitle = async () => {
+    const title = sheetData?.title || 'Q3 Financial Overview';
+    try {
+      await navigator.clipboard.writeText(title);
+      setCopiedTitle(true);
+      setTimeout(() => setCopiedTitle(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy title:', err);
+    }
+  };
 
   // Add column handler
   const handleAddColumn = () => {
@@ -416,231 +527,156 @@ export default function SpreadsheetTable({
     },
     {
       accessorKey: 'job',
-      header: () => (
-        <div
-          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
-          onClick={() => handleColumnSelect('job')}
-        >
-          <span className="flex items-center gap-1">
-            <JobIcon className="w-3 h-3" />
-            Job Request
-          </span>
-          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-        </div>
-      ),
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="job"
-          onChange={handleCellChange}
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'job'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'job')}
-        />
-      ),
+      header: () =>
+        createColumnHeader(
+          <JobIcon className="w-3 h-3" />,
+          'Job Request',
+          handleColumnSelect,
+          'job'
+        ),
+      cell: info =>
+        createEditableCell(
+          info,
+          'job',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell
+        ),
       size: 240,
     },
     {
       accessorKey: 'submitted',
-      header: () => (
-        <div
-          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
-          onClick={() => handleColumnSelect('submitted')}
-        >
-          <span className="flex items-center gap-1">
-            <SubmittedIcon className="w-3 h-3" />
-            Submitted
-          </span>
-          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-        </div>
-      ),
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="submitted"
-          onChange={handleCellChange}
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'submitted'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'submitted')}
-          align="right"
-        />
-      ),
+      header: () =>
+        createColumnHeader(
+          <SubmittedIcon className="w-3 h-3" />,
+          'Submitted',
+          handleColumnSelect,
+          'submitted'
+        ),
+      cell: info =>
+        createEditableCell(
+          info,
+          'submitted',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell,
+          { align: 'right' }
+        ),
       size: 120,
     },
     {
       accessorKey: 'status',
-      header: () => (
-        <div
-          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
-          onClick={() => handleColumnSelect('status')}
-        >
-          <span className="flex items-center gap-1">
-            <StatusIcon className="w-3 h-3" />
-            Status
-          </span>
-          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-        </div>
-      ),
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="status"
-          onChange={handleCellChange}
-          isStatus
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'status'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'status')}
-        />
-      ),
+      header: () =>
+        createColumnHeader(
+          <StatusIcon className="w-3 h-3" />,
+          'Status',
+          handleColumnSelect,
+          'status'
+        ),
+      cell: info =>
+        createEditableCell(
+          info,
+          'status',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell,
+          { isStatus: true }
+        ),
       size: 120,
     },
     {
       accessorKey: 'submitter',
-      header: () => (
-        <div
-          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
-          onClick={() => handleColumnSelect('submitter')}
-        >
-          <span className="flex items-center gap-1">
-            <SubmitterIcon className="w-3 h-3" />
-            Submitter
-          </span>
-          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-        </div>
-      ),
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="submitter"
-          onChange={handleCellChange}
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'submitter'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'submitter')}
-        />
-      ),
+      header: () =>
+        createColumnHeader(
+          <SubmitterIcon className="w-3 h-3" />,
+          'Submitter',
+          handleColumnSelect,
+          'submitter'
+        ),
+      cell: info =>
+        createEditableCell(
+          info,
+          'submitter',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell
+        ),
       size: 120,
     },
     {
       accessorKey: 'url',
-      header: () => (
-        <div
-          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
-          onClick={() => handleColumnSelect('url')}
-        >
-          <span className="flex items-center gap-1">
-            <URLIcon className="w-3 h-3" />
-            URL
-          </span>
-          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-        </div>
-      ),
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="url"
-          onChange={handleCellChange}
-          isUrl
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'url'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'url')}
-        />
-      ),
+      header: () =>
+        createColumnHeader(
+          <URLIcon className="w-3 h-3" />,
+          'URL',
+          handleColumnSelect,
+          'url'
+        ),
+      cell: info =>
+        createEditableCell(
+          info,
+          'url',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell,
+          { isUrl: true }
+        ),
       size: 120,
     },
     {
       accessorKey: 'assigned',
-      header: () => (
-        <div className="flex items-center gap-1">
-          <AssignedIcon className="w-3 h-3" />
-          Assigned
-        </div>
-      ),
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="assigned"
-          onChange={handleCellChange}
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'assigned'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'assigned')}
-        />
-      ),
+      header: () =>
+        createSimpleHeader('Assigned', <AssignedIcon className="w-3 h-3" />),
+      cell: info =>
+        createEditableCell(
+          info,
+          'assigned',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell
+        ),
       size: 120,
     },
     {
       accessorKey: 'priority',
-      header: () => <div className="flex items-center gap-1">Priority</div>,
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="priority"
-          onChange={handleCellChange}
-          isPriority
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'priority'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'priority')}
-        />
-      ),
+      header: () => createSimpleHeader('Priority'),
+      cell: info =>
+        createEditableCell(
+          info,
+          'priority',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell,
+          { isPriority: true }
+        ),
       size: 100,
     },
     {
       accessorKey: 'due',
-      header: () => <div className="flex items-center gap-1">Due Date</div>,
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="due"
-          onChange={handleCellChange}
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'due'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'due')}
-          align="right"
-        />
-      ),
+      header: () => createSimpleHeader('Due Date'),
+      cell: info =>
+        createEditableCell(
+          info,
+          'due',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell,
+          { align: 'right' }
+        ),
       size: 120,
     },
     {
       accessorKey: 'value',
-      header: () => <div className="flex items-center gap-1">Est. Value</div>,
-      cell: info => (
-        <EditableCell
-          value={(info.getValue() as string) || ''}
-          rowIndex={info.row.index}
-          columnId="value"
-          onChange={handleCellChange}
-          isSelected={
-            selectedCell?.row === info.row.index &&
-            selectedCell?.column === 'value'
-          }
-          onSelect={() => handleCellSelect(info.row.index, 'value')}
-          renderValue={formatLakh}
-          align="right"
-        />
-      ),
+      header: () => createSimpleHeader('Est. Value'),
+      cell: info =>
+        createEditableCell(
+          info,
+          'value',
+          handleCellChange,
+          handleCellSelect,
+          selectedCell,
+          { renderValue: formatLakh, align: 'right' }
+        ),
       size: 160,
     },
   ];
@@ -648,7 +684,7 @@ export default function SpreadsheetTable({
   // Insert extra columns before the plus column
   const dynamicExtraColumns: ColumnDef<RowData>[] = extraColumns.map(col => ({
     id: col.id,
-    header: () => <div className="flex items-center gap-1">{col.title}</div>,
+    header: () => createSimpleHeader(col.title),
     cell: (info: { row: Row<RowData> }) => (
       <EditableCell
         value={info.row.original[col.id] || ''}
@@ -690,7 +726,7 @@ export default function SpreadsheetTable({
 
   return (
     <div
-      className="overflow-x-auto bg-white [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mr-4 bg-white"
       ref={scrollRef}
     >
       <table className="w-full relative" style={{ borderCollapse: 'collapse' }}>
@@ -706,10 +742,20 @@ export default function SpreadsheetTable({
               className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none"
             >
               <div className="flex items-center gap-3 h-6">
-                <span className="text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal">
-                  <IoLinkSharp size={16} color="#1A8CFF" />
+                <button
+                  onClick={handleCopyTitle}
+                  className={`text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal transition-colors hover:bg-gray-200 cursor-pointer ${
+                    copiedTitle ? 'bg-green-100 text-green-700' : ''
+                  }`}
+                  title={copiedTitle ? 'Copied!' : 'Click to copy sheet title'}
+                >
+                  <IoLinkSharp
+                    size={16}
+                    color={copiedTitle ? '#059669' : '#1A8CFF'}
+                  />
                   {sheetData?.title || 'Q3 Financial Overview'}
-                </span>
+                  {copiedTitle && <span className="ml-1 text-xs">✓</span>}
+                </button>
                 <GrPowerCycle
                   className="animate-spin"
                   color="#FA6736"
@@ -725,32 +771,50 @@ export default function SpreadsheetTable({
               className="bg-[#D2E0D4] text-[#505450] font-medium text-sm h-8 px-4 text-center border-none"
               style={{ minWidth: 120, maxWidth: 120 }}
             >
-              <span className="flex items-center justify-center gap-2 whitespace-nowrap">
-                <ActionIcon className="w-3.5 h-3.5 custom-fill" />
-                ABC
-                <img src={Ellipsis} alt="ellipsis" />
-              </span>
+              <Dropdown
+                trigger={
+                  <span className="flex items-center justify-center gap-2 whitespace-nowrap">
+                    <ActionIcon className="w-3.5 h-3.5 custom-fill" />
+                    ABC
+                    <img src={Ellipsis} alt="ellipsis" />
+                  </span>
+                }
+                items={createDropdownItems('abc')}
+                width="100px"
+              />
             </th>
             <th
               colSpan={2}
               className="bg-[#DCCFFC] text-textDark font-medium text-sm h-8 px-4 text-center border-none"
               style={{ minWidth: 220, maxWidth: 220 }}
             >
-              <span className="flex items-center justify-center whitespace-nowrap gap-2">
-                <ActionIcon className="w-3.5 h-3.5" />
-                Answer a question
-                <img src={Ellipsis} alt="ellipsis" />
-              </span>
+              <Dropdown
+                trigger={
+                  <span className="flex items-center justify-center whitespace-nowrap gap-2">
+                    <ActionIcon className="w-3.5 h-3.5" />
+                    Answer a question
+                    <img src={Ellipsis} alt="ellipsis" />
+                  </span>
+                }
+                items={createDropdownItems('answer')}
+                width="100px"
+              />
             </th>
             <th
               className="bg-[#FAC2AF] text-[#695149] font-medium text-sm h-8 px-4 text-center border-none"
               style={{ minWidth: 160, maxWidth: 160 }}
             >
-              <span className="flex items-center justify-center gap-2 whitespace-nowrap">
-                <ActionIcon className="w-3.5 h-3.5" />
-                Extract
-                <img src={Ellipsis} alt="ellipsis" />
-              </span>
+              <Dropdown
+                trigger={
+                  <span className="flex items-center justify-center gap-2 whitespace-nowrap">
+                    <ActionIcon className="w-3.5 h-3.5" />
+                    Extract
+                    <img src={Ellipsis} alt="ellipsis" />
+                  </span>
+                }
+                items={createDropdownItems('extract')}
+                width="100px"
+              />
             </th>
             {/* Render blank th for each extra column */}
             {extraColumns.map(col => (
