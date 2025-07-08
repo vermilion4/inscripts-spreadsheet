@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { FiPlus, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { createNewSheet, SheetData, saveSheetsToStorage } from '../constants/SheetData'
 
-const Footer = () => {
+interface FooterProps {
+  sheets: SheetData[];
+  activeSheetId: string;
+  onSheetChange?: (sheetData: SheetData) => void;
+  onSheetsChange?: (sheets: SheetData[]) => void;
+}
+
+const Footer = ({ sheets, activeSheetId, onSheetChange, onSheetsChange }: FooterProps) => {
   const [activeTab, setActiveTab] = useState(0)
-  const [sheets, setSheets] = useState([
-    { id: 0, name: 'All Orders' },
-    { id: 1, name: 'Pending' },
-    { id: 2, name: 'Reviewed' },
-    { id: 3, name: 'Arrived' }
-  ])
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(false)
   const [plusButtonSticky, setPlusButtonSticky] = useState(false)
@@ -17,11 +19,21 @@ const Footer = () => {
 
   const addNewSheet = () => {
     const newSheetNumber = sheets.length + 1
-    const newSheets = [...sheets, {
-      id: sheets.length,
-      name: `Sheet ${newSheetNumber}`
-    }]
-    setSheets(newSheets)
+    const newSheet = createNewSheet(newSheetNumber)
+    const newSheets = [...sheets, newSheet]
+    
+    // Save to localStorage
+    saveSheetsToStorage(newSheets)
+    
+    // Notify parent component about the new sheets and active sheet
+    if (onSheetsChange) {
+      onSheetsChange(newSheets)
+    }
+    if (onSheetChange) {
+      onSheetChange(newSheet)
+    }
+    
+    // Update active tab to the new sheet
     setActiveTab(newSheets.length - 1)
     
     // Wait for DOM update before scrolling
@@ -35,6 +47,25 @@ const Footer = () => {
       }
     }, 0)
   }
+
+  const handleSheetClick = (index: number) => {
+    setActiveTab(index)
+    // Notify parent component about the active sheet change
+    if (onSheetChange) {
+      onSheetChange(sheets[index])
+    }
+  }
+
+  // Update active tab when activeSheetId changes or sheets array changes
+  useEffect(() => {
+    const activeIndex = sheets.findIndex(sheet => sheet.id === activeSheetId);
+    if (activeIndex !== -1) {
+      setActiveTab(activeIndex);
+    } else if (sheets.length > 0) {
+      // If active sheet not found, default to first sheet
+      setActiveTab(0);
+    }
+  }, [activeSheetId, sheets]);
 
   const checkScrollState = () => {
     if (scrollContainerRef.current && contentRef.current) {
@@ -72,6 +103,8 @@ const Footer = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [sheets])
 
+
+
   return (
     <footer className='h-12 fixed bottom-0 w-full bg-white border-t border-borderTertiary pl-4 md:pl-8 pt-1 z-50'>
       <div className='flex items-center h-full'>
@@ -100,7 +133,7 @@ const Footer = () => {
               {sheets.map((sheet, index) => (
                 <button
                   key={sheet.id}
-                  onClick={() => setActiveTab(index)}
+                  onClick={() => handleSheetClick(index)}
                   className={`px-4 py-[10px] h-11 cursor-pointer hover:bg-primary-100 border-t-2 hover:border-default font-medium flex-shrink-0 ${
                     activeTab === index 
                       ? 'bg-primary-100 text-primary-700 border-default font-semibold' 

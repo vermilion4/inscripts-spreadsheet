@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,65 +18,15 @@ import {ReactComponent as ActionIcon} from '../assets/action.svg'
 import CaratDown from '../assets/carat-down.svg';
 import Ellipsis from '../assets/ellipsis.svg'
 import { FiPlus } from 'react-icons/fi';
+import { SheetData } from '../constants/SheetData';
 
-const prefilledRows = [
-  {
-    job: 'Launch social media campaign for product',
-    submitted: '15-11-2024',
-    status: 'In-process',
-    submitter: 'Aisha Patel',
-    url: 'www.aishapatel.com',
-    assigned: 'Sophie Choudhury',
-    priority: 'Medium',
-    due: '20-11-2024',
-    value: '6,200,000',
-  },
-  {
-    job: 'Update press kit for company redesign',
-    submitted: '28-10-2024',
-    status: 'Need to start',
-    submitter: 'Irfan Khan',
-    url: 'www.irfankhan.com',
-    assigned: 'Tejas Pandey',
-    priority: 'High',
-    due: '30-10-2024',
-    value: '3,500,000',
-  },
-  {
-    job: 'Finalize user testing feedback for app',
-    submitted: '05-12-2024',
-    status: 'In-process',
-    submitter: 'Mark Johnson',
-    url: 'www.markjohnson.com',
-    assigned: 'Rachel Lee',
-    priority: 'Medium',
-    due: '10-12-2024',
-    value: '4,750,000',
-  },
-  {
-    job: 'Design new features for the website',
-    submitted: '10-01-2025',
-    status: 'Complete',
-    submitter: 'Emily Green',
-    url: 'www.emilygreen.com',
-    assigned: 'Tom Wright',
-    priority: 'Low',
-    due: '15-01-2025',
-    value: '5,900,000',
-  },
-  {
-    job: 'Prepare financial report for Q4',
-    submitted: '25-01-2025',
-    status: 'Blocked',
-    submitter: 'Jessica Brown',
-    url: 'www.jessicabrown.com',
-    assigned: 'Kevin Smith',
-    priority: 'Low',
-    due: '30-01-2025',
-    value: '2,800,000',
-  },
-];
+interface SpreadsheetTableProps {
+  sheetData?: SheetData;
+  onDataChange?: (data: any[]) => void;
+  onExtraColumnsChange?: (extraColumns: {id: string, title: string}[]) => void;
+}
 
+// Default empty data structure for new sheets
 const defaultData: Array<{
   job: string;
   submitted: string;
@@ -88,20 +38,17 @@ const defaultData: Array<{
   due: string;
   value: string;
   [key: string]: any; // allow extra columns
-}> = [
-  ...prefilledRows,
-  ...Array.from({ length: 95 }, () => ({
-    job: '',
-    submitted: '',
-    status: '',
-    submitter: '',
-    url: '',
-    assigned: '',
-    priority: '',
-    due: '',
-    value: '',
-  })),
-];
+}> = Array.from({ length: 100 }, () => ({
+  job: '',
+  submitted: '',
+  status: '',
+  submitter: '',
+  url: '',
+  assigned: '',
+  priority: '',
+  due: '',
+  value: '',
+}));
 
 const statusColors: Record<string, string> = {
   'In-process': 'bg-[#FFF3D6] text-[#85640B]',
@@ -344,19 +291,37 @@ function EditableCell({
   );
 }
 
-export default function SpreadsheetTable() {
-  const [data, setData] = useState(() => [...defaultData]);
+export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColumnsChange }: SpreadsheetTableProps) {
+  const [data, setData] = useState(() => sheetData?.data || [...defaultData]);
   const [selectedCell, setSelectedCell] = useState<{row: number, column: string} | null>(null);
-  const [extraColumns, setExtraColumns] = useState<{id: string, title: string}[]>([]);
+  const [extraColumns, setExtraColumns] = useState<{id: string, title: string}[]>(sheetData?.extraColumns || []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevExtraColumnsLength = useRef(0);
+
+  // Update data and extra columns when sheetData changes
+  useEffect(() => {
+    if (sheetData?.data) {
+      setData([...sheetData.data]);
+    }
+    if (sheetData?.extraColumns) {
+      setExtraColumns([...sheetData.extraColumns]);
+    } else {
+      setExtraColumns([]);
+    }
+  }, [sheetData]);
 
   // Add column handler
   const handleAddColumn = () => {
     const nextIndex = extraColumns.length + 1;
     const newId = `extra_${nextIndex}`;
-    setExtraColumns(cols => [...cols, { id: newId, title: `Title ${nextIndex + 5}` }]);
+    const newExtraColumns = [...extraColumns, { id: newId, title: `Title ${nextIndex + 5}` }];
+    setExtraColumns(newExtraColumns);
     setData(old => old.map(row => ({ ...row, [newId]: row[newId] || '' })));
+    
+    // Notify parent component about extra columns change
+    if (onExtraColumnsChange) {
+      onExtraColumnsChange(newExtraColumns);
+    }
   };
 
   // Scroll to right when a new column is added
@@ -374,6 +339,10 @@ export default function SpreadsheetTable() {
     setData(old => {
       const newData = [...old];
       newData[row] = { ...newData[row], [column]: value };
+      // Notify parent component about data changes
+      if (onDataChange) {
+        onDataChange(newData);
+      }
       return newData;
     });
   };
@@ -412,7 +381,7 @@ export default function SpreadsheetTable() {
           onSelect={() => handleCellSelect(info.row.index, 'job')}
         />
       ),
-      size: 236,
+      size: 240,
     },
     {
       accessorKey: 'submitted',
@@ -436,7 +405,7 @@ export default function SpreadsheetTable() {
           align="right"
         />
       ),
-      size: 124,
+      size: 120,
     },
     {
       accessorKey: 'status',
@@ -460,7 +429,7 @@ export default function SpreadsheetTable() {
           onSelect={() => handleCellSelect(info.row.index, 'status')}
         />
       ),
-      size: 140,
+      size: 120,
     },
     {
       accessorKey: 'submitter',
@@ -507,7 +476,7 @@ export default function SpreadsheetTable() {
           onSelect={() => handleCellSelect(info.row.index, 'url')}
         />
       ),
-      size: 180,
+      size: 120,
     },
     {
       accessorKey: 'assigned',
@@ -614,7 +583,7 @@ export default function SpreadsheetTable() {
     id: 'add-more',
     header: () => null,
     cell: () => null,
-    size: 32,
+    size: 100,
     enableSorting: false,
   };
 
@@ -633,16 +602,16 @@ export default function SpreadsheetTable() {
 
   return (
     <div className="overflow-x-auto bg-white" ref={scrollRef}>
-      <table className="w-full relative" style={{ borderCollapse: 'collapse', minWidth: '1200px' }}>
+      <table className="w-full relative" style={{ borderCollapse: 'collapse' }}>
         <thead>
           {/* Custom top header row */}
           <tr>
             <th className="bg-white border-none p-0 sticky left-0 z-20" style={{ width: 32, minWidth: 32, maxWidth: 32 }}></th>
-            <th colSpan={4} className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none" style={{ minWidth: 236*4 }}>
+            <th colSpan={4} className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none">
               <div className="flex items-center gap-3 h-6">
                 <span className="text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal">
                   <IoLinkSharp size={16} color='#1A8CFF' />
-                  Q3 Financial Overview</span>
+                  {sheetData?.title || 'Q3 Financial Overview'}</span>
                   <GrPowerCycle className='animate-spin' color='#FA6736' size={16} />
               </div>
             </th>
@@ -673,7 +642,7 @@ export default function SpreadsheetTable() {
               <th key={col.id} className=" p-0" style={{ width: 124, minWidth: 124, maxWidth: 124 }}></th>
             ))}
             {/* Plus column header with plus icon, sticky right */}
-            <th className="bg-borderTertiary p-0 border-dotted-custom sticky right-0 z-20" style={{ width: 124, minWidth: 124, maxWidth: 124 }}>
+            <th className="bg-borderTertiary p-0 border-dotted-custom sticky right-0 z-20" style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
               <button onClick={handleAddColumn} className="w-full h-full flex items-center justify-center focus:outline-none">
                 <FiPlus size={20} color='#04071E' />
               </button>
