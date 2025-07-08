@@ -17,6 +17,7 @@ import { ReactComponent as JobIcon } from '../assets/job.svg';
 import { ReactComponent as ActionIcon } from '../assets/action.svg';
 
 import CaratDown from '../assets/carat-down.svg';
+import Pound from '../assets/pound.svg';
 import Ellipsis from '../assets/ellipsis.svg';
 import { FiPlus } from 'react-icons/fi';
 import { SheetData } from '../constants/SheetData';
@@ -404,7 +405,11 @@ export default function SpreadsheetTable({
   const baseColumns: ColumnDef<RowData>[] = [
     {
       id: 'row',
-      header: '#',
+      header: () => (
+        <div className="flex items-center justify-center">
+          <img src={Pound} alt="pound" className="w-3 h-3" />
+        </div>
+      ),
       cell: info => info.row.index + 1,
       size: 32,
       enableSorting: false,
@@ -785,9 +790,9 @@ export default function SpreadsheetTable({
                       borderTop: '1px solid #F6F6F6',
                       borderBottom: '1px solid #F6F6F6',
                     }}
-                    className={`${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] ${
+                    className={`${index === 0 ? 'sticky left-0 z-10' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] bg-borderTertiary ${
                       index === 0
-                        ? 'text-center text-lg text-disabledPrimary italic font-normal after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
+                        ? 'after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
                         : index === 6
                           ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
                           : index === 7 || index === 8
