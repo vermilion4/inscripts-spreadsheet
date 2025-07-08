@@ -5,6 +5,7 @@ import {
   flexRender,
   ColumnDef,
   Row,
+  ColumnResizeMode,
 } from '@tanstack/react-table';
 import { IoLinkSharp } from 'react-icons/io5';
 import { GrPowerCycle } from 'react-icons/gr';
@@ -302,7 +303,8 @@ function EditableCell({
     if (isStatus && value) {
       return (
         <span
-          className={`px-2 py-1 h-6 rounded-full text-xs font-medium flex items-center justify-center w-fit mx-auto ${statusColors[value] || ''}`}
+          className={`px-2 py-1 h-6 rounded-full text-xs font-medium flex items-center justify-center w-fit mx-auto truncate ${statusColors[value] || ''}`}
+          title={value}
         >
           {value}
         </span>
@@ -312,7 +314,8 @@ function EditableCell({
     if (isPriority && value) {
       return (
         <span
-          className={`font-semibold flex mx-auto justify-center ${priorityColors[value] || ''}`}
+          className={`font-semibold flex mx-auto justify-center truncate ${priorityColors[value] || ''}`}
+          title={value}
         >
           {value}
         </span>
@@ -325,8 +328,9 @@ function EditableCell({
           href={`https://${value}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary underline truncate max-w-[120px] block"
+          className="text-primary underline truncate block w-full"
           onClick={e => e.stopPropagation()}
+          title={value}
         >
           {value}
         </a>
@@ -350,9 +354,13 @@ function EditableCell({
       tabIndex={0}
     >
       <span
-        className={`w-full truncate h-full flex items-center px-2 py-1 ${align === 'right' ? 'justify-end' : ''}`}
+        className={`w-full h-full flex items-center px-2 py-1 overflow-hidden ${align === 'right' ? 'justify-end' : ''}`}
       >
-        {cellContent()}
+        <span
+          className={`truncate w-full ${align === 'right' ? 'text-right' : ''}`}
+        >
+          {cellContent()}
+        </span>
       </span>
     </div>
   );
@@ -413,6 +421,31 @@ const createEditableCell = (
   />
 );
 
+// Optimized Column Resizer Component
+interface ColumnResizerProps {
+  onMouseDown: (e: React.MouseEvent) => void;
+  isResizing: boolean;
+}
+
+const ColumnResizer: React.FC<ColumnResizerProps> = React.memo(
+  ({ onMouseDown, isResizing }) => (
+    <div
+      onMouseDown={onMouseDown}
+      className={`absolute top-0 right-0 h-full w-2 cursor-col-resize select-none touch-none ${
+        isResizing ? 'bg-blue-500' : 'bg-transparent hover:bg-blue-300'
+      }`}
+      style={{
+        transform: 'translateX(50%)',
+        zIndex: 1000,
+        cursor: 'col-resize',
+      }}
+    />
+  ),
+  (prevProps, nextProps) => {
+    return prevProps.isResizing === nextProps.isResizing;
+  }
+);
+
 export default function SpreadsheetTable({
   sheetData,
   onDataChange,
@@ -431,6 +464,8 @@ export default function SpreadsheetTable({
     { id: string; title: string }[]
   >(sheetData?.extraColumns || []);
   const [copiedTitle, setCopiedTitle] = useState(false);
+  const [columnSizing, setColumnSizing] = useState({});
+  const [columnResizeMode] = useState<ColumnResizeMode>('onChange');
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevExtraColumnsLength = useRef(0);
 
@@ -511,6 +546,11 @@ export default function SpreadsheetTable({
     setSelectedColumn(selectedColumn === columnId ? null : columnId);
   };
 
+  // Optimized column sizing handler
+  const handleColumnSizingChange = React.useCallback((updater: any) => {
+    setColumnSizing(updater);
+  }, []);
+
   // Build columns array
   const baseColumns: ColumnDef<RowData>[] = [
     {
@@ -523,6 +563,7 @@ export default function SpreadsheetTable({
       cell: info => info.row.index + 1,
       size: 32,
       enableSorting: false,
+      enableResizing: true,
     },
     {
       accessorKey: 'job',
@@ -545,6 +586,7 @@ export default function SpreadsheetTable({
           selectedCell
         ),
       size: 240,
+      enableResizing: true,
     },
     {
       accessorKey: 'submitted',
@@ -568,6 +610,7 @@ export default function SpreadsheetTable({
           { align: 'right' }
         ),
       size: 120,
+      enableResizing: true,
     },
     {
       accessorKey: 'status',
@@ -591,6 +634,7 @@ export default function SpreadsheetTable({
           { isStatus: true }
         ),
       size: 120,
+      enableResizing: true,
     },
     {
       accessorKey: 'submitter',
@@ -613,6 +657,7 @@ export default function SpreadsheetTable({
           selectedCell
         ),
       size: 120,
+      enableResizing: true,
     },
     {
       accessorKey: 'url',
@@ -636,6 +681,7 @@ export default function SpreadsheetTable({
           { isUrl: true }
         ),
       size: 120,
+      enableResizing: true,
     },
     {
       accessorKey: 'assigned',
@@ -653,6 +699,7 @@ export default function SpreadsheetTable({
           selectedCell
         ),
       size: 120,
+      enableResizing: true,
     },
     {
       accessorKey: 'priority',
@@ -670,6 +717,7 @@ export default function SpreadsheetTable({
           { isPriority: true }
         ),
       size: 100,
+      enableResizing: true,
     },
     {
       accessorKey: 'due',
@@ -687,6 +735,7 @@ export default function SpreadsheetTable({
           { align: 'right' }
         ),
       size: 120,
+      enableResizing: true,
     },
     {
       accessorKey: 'value',
@@ -704,6 +753,7 @@ export default function SpreadsheetTable({
           { renderValue: formatLakh, align: 'right' }
         ),
       size: 160,
+      enableResizing: true,
     },
   ];
 
@@ -725,6 +775,7 @@ export default function SpreadsheetTable({
       />
     ),
     size: 124,
+    enableResizing: true,
   }));
 
   // Plus column (always last)
@@ -734,15 +785,33 @@ export default function SpreadsheetTable({
     cell: () => null,
     size: 100,
     enableSorting: false,
+    enableResizing: true,
   };
 
   // Final columns array: base columns + extra columns + plus column
-  const columns = [...baseColumns, ...dynamicExtraColumns, plusColumn];
+  const columns = React.useMemo(
+    () => [...baseColumns, ...dynamicExtraColumns, plusColumn],
+    [baseColumns, dynamicExtraColumns, plusColumn]
+  );
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    columnResizeMode,
+    state: {
+      columnSizing,
+    },
+    onColumnSizingChange: handleColumnSizingChange,
+    enableColumnResizing: true,
+    defaultColumn: {
+      size: 150,
+      minSize: 50,
+      maxSize: 500,
+    },
+    debugTable: false,
+    debugHeaders: false,
+    debugColumns: false,
   });
 
   // Filter out hidden rows (1-based index)
@@ -754,6 +823,9 @@ export default function SpreadsheetTable({
     <div
       className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mr-4 bg-white"
       ref={scrollRef}
+      style={{
+        userSelect: 'none',
+      }}
     >
       <table className="w-full relative" style={{ borderCollapse: 'collapse' }}>
         <thead>
@@ -880,7 +952,7 @@ export default function SpreadsheetTable({
                       borderTop: '1px solid #F6F6F6',
                       borderBottom: '1px solid #F6F6F6',
                     }}
-                    className={`${index === 0 ? 'sticky left-0 z-10' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] bg-borderTertiary ${
+                    className={`${index === 0 ? 'sticky left-0 z-10' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] bg-borderTertiary relative ${
                       index === 0
                         ? 'after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
                         : index === 6
@@ -895,6 +967,12 @@ export default function SpreadsheetTable({
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
+                    )}
+                    {header.column.getCanResize() && (
+                      <ColumnResizer
+                        onMouseDown={header.getResizeHandler()}
+                        isResizing={header.column.getIsResizing()}
+                      />
                     )}
                   </th>
                 );
@@ -925,7 +1003,7 @@ export default function SpreadsheetTable({
                       borderTop: '1px solid #F6F6F6',
                       borderBottom: '1px solid #F6F6F6',
                     }}
-                    className={`h-8 border border-[#F6F6F6] ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === row.getVisibleCells().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
+                    className={`h-8 border border-[#F6F6F6] relative ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === row.getVisibleCells().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
                       index === 0
                         ? 'text-center text-tertiary after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]'
                         : 'text-left text-primary p-0'
