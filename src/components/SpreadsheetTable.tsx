@@ -27,6 +27,7 @@ interface SpreadsheetTableProps {
   onExtraColumnsChange?: (
     extraColumns: { id: string; title: string }[]
   ) => void;
+  hiddenFields?: Set<number>;
 }
 
 interface RowData {
@@ -318,6 +319,7 @@ export default function SpreadsheetTable({
   sheetData,
   onDataChange,
   onExtraColumnsChange,
+  hiddenFields,
 }: SpreadsheetTableProps) {
   const [data, setData] = useState<RowData[]>(
     () => sheetData?.data || [...defaultData]
@@ -353,6 +355,8 @@ export default function SpreadsheetTable({
       { id: newId, title: `Title ${nextIndex + 5}` },
     ];
     setExtraColumns(newExtraColumns);
+
+    // Update data with the new column, ensuring all rows have the new field
     setData(old => old.map(row => ({ ...row, [newId]: '' })));
 
     // Notify parent component about extra columns change
@@ -646,17 +650,18 @@ export default function SpreadsheetTable({
   };
 
   // Final columns array: base columns + extra columns + plus column
-  const columns = [
-    ...baseColumns.slice(0, 10), // up to value column
-    ...dynamicExtraColumns,
-    plusColumn,
-  ];
+  const columns = [...baseColumns, ...dynamicExtraColumns, plusColumn];
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  // Filter out hidden rows (1-based index)
+  const visibleRows = table
+    .getRowModel()
+    .rows.filter((row, idx) => !hiddenFields?.has(idx + 1));
 
   return (
     <div
@@ -778,31 +783,29 @@ export default function SpreadsheetTable({
           </tr>
         </thead>
         <tbody>
-          {table.getRowModel().rows.map(row => (
+          {visibleRows.map(row => (
             <tr key={row.id}>
-              {table.getAllColumns().map((column, index) => (
+              {row.getVisibleCells().map((cell, index) => (
                 <td
-                  key={column.id}
+                  key={cell.id}
                   style={{
-                    width: column.getSize(),
-                    minWidth: column.getSize(),
-                    maxWidth: column.getSize(),
+                    width: cell.column.getSize(),
+                    minWidth: cell.column.getSize(),
+                    maxWidth: cell.column.getSize(),
                     backgroundColor:
-                      index === table.getAllColumns().length - 1
+                      index === row.getVisibleCells().length - 1
                         ? '#fff'
                         : undefined,
                     borderTop: '1px solid #F6F6F6',
                     borderBottom: '1px solid #F6F6F6',
                   }}
-                  className={`h-8 border border-[#F6F6F6] ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
+                  className={`h-8 border border-[#F6F6F6] ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === row.getVisibleCells().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
                     index === 0
                       ? 'text-center text-tertiary after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]'
                       : 'text-left text-primary p-0'
                   }`}
                 >
-                  {flexRender(column.columnDef.cell, {
-                    ...row.getVisibleCells()[index]?.getContext?.(),
-                  })}
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
             </tr>

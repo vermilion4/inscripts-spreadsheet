@@ -39,54 +39,70 @@ interface ToolbarButtonProps {
   onClick?: () => void;
   isActive?: boolean;
   showLabelOnMobile?: boolean;
+  ref?: React.RefObject<HTMLButtonElement>;
 }
 
-const ToolbarButton = ({
-  icon,
-  label,
-  variant = 'default',
-  className = '',
-  onClick,
-  isActive = false,
-  showLabelOnMobile = true,
-}: ToolbarButtonProps) => (
-  <Tooltip content={label} position="bottom">
-    <button
-      className={`flex items-center gap-1 group relative ${ButtonVariants[variant]} ${className} ${isActive ? 'bg-secondary' : ''}`}
-      onClick={onClick}
-      type="button"
-    >
-      <img
-        src={icon}
-        alt={label}
-        className={`w-4 h-4 ${!showLabelOnMobile ? 'mx-auto' : ''}`}
-      />
-      <span
-        className={`${showLabelOnMobile ? 'inline sm:inline' : 'hidden sm:inline'}`}
+const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonProps>(
+  (
+    {
+      icon,
+      label,
+      variant = 'default',
+      className = '',
+      onClick,
+      isActive = false,
+      showLabelOnMobile = true,
+    },
+    ref
+  ) => (
+    <Tooltip content={label} position="bottom">
+      <button
+        ref={ref}
+        className={`flex items-center gap-1 group relative ${ButtonVariants[variant]} ${className} ${isActive ? 'bg-secondary' : ''}`}
+        onClick={onClick}
+        type="button"
       >
-        {label}
-      </span>
-    </button>
-  </Tooltip>
+        <img
+          src={icon}
+          alt={label}
+          className={`w-4 h-4 ${!showLabelOnMobile ? 'mx-auto' : ''}`}
+        />
+        <span
+          className={`${showLabelOnMobile ? 'inline sm:inline' : 'hidden sm:inline'}`}
+        >
+          {label}
+        </span>
+      </button>
+    </Tooltip>
+  )
 );
 
 interface ToolbarProps {
   activeSheet?: SheetData | null;
   onImportSheet?: (sheet: SheetData) => void;
   onExportSheet?: (sheet: SheetData) => void;
+  hiddenFields?: Set<number>;
+  onHiddenFieldsChange?: (hiddenFields: Set<number>) => void;
 }
 
 const Toolbar = ({
   activeSheet,
   onImportSheet,
   onExportSheet,
+  hiddenFields = new Set(),
+  onHiddenFieldsChange,
 }: ToolbarProps) => {
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false);
   const [sharePopoverOpen, setSharePopoverOpen] = useState(false);
   const [activeTools, setActiveTools] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
+  const [hideFieldsPopoverOpen, setHideFieldsPopoverOpen] = useState(false);
 
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const hideFieldsButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Available rows that can be hidden (show first 20 for demo)
+  const availableRows = Array.from({ length: 20 }, (_, i) => i + 1);
 
   const leftTools = [
     { icon: hideIcon, label: 'Hide fields' },
@@ -96,6 +112,15 @@ const Toolbar = ({
   ];
 
   const handleToolClick = (toolLabel: string) => {
+    alert(`Tool clicked: ${toolLabel}`);
+
+    if (toolLabel === 'Hide fields') {
+      // For hide fields, just toggle the popover without affecting active state
+      setHideFieldsPopoverOpen(!hideFieldsPopoverOpen);
+      return;
+    }
+
+    // For other tools, handle normal activation/deactivation
     const newActiveTools = new Set(activeTools);
     if (newActiveTools.has(toolLabel)) {
       newActiveTools.delete(toolLabel);
@@ -103,9 +128,20 @@ const Toolbar = ({
       newActiveTools.add(toolLabel);
     }
     setActiveTools(newActiveTools);
+
     console.log(
       `${toolLabel} ${newActiveTools.has(toolLabel) ? 'activated' : 'deactivated'}`
     );
+  };
+
+  const handleFieldToggle = (rowIndex: number) => {
+    const newHiddenFields = new Set(hiddenFields);
+    if (newHiddenFields.has(rowIndex)) {
+      newHiddenFields.delete(rowIndex);
+    } else {
+      newHiddenFields.add(rowIndex);
+    }
+    onHiddenFieldsChange?.(newHiddenFields);
   };
 
   const handleToolbarToggle = () => {
@@ -207,15 +243,29 @@ const Toolbar = ({
           <div
             className={`hidden lg:flex items-center gap-1 transition-all duration-300 ${isToolbarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
           >
-            {leftTools.map((tool, index) => (
-              <ToolbarButton
-                key={index}
-                icon={tool.icon}
-                label={tool.label}
-                onClick={() => handleToolClick(tool.label)}
-                isActive={activeTools.has(tool.label)}
-              />
-            ))}
+            {leftTools.map((tool, index) => {
+              if (tool.label === 'Hide fields') {
+                return (
+                  <ToolbarButton
+                    key={index}
+                    icon={tool.icon}
+                    label={tool.label}
+                    onClick={() => handleToolClick(tool.label)}
+                    isActive={hideFieldsPopoverOpen}
+                    ref={hideFieldsButtonRef}
+                  />
+                );
+              }
+              return (
+                <ToolbarButton
+                  key={index}
+                  icon={tool.icon}
+                  label={tool.label}
+                  onClick={() => handleToolClick(tool.label)}
+                  isActive={activeTools.has(tool.label)}
+                />
+              );
+            })}
           </div>
         </div>
         {/* Right section */}
@@ -322,6 +372,57 @@ const Toolbar = ({
               </div>
             </Popover>
           </div>
+          {/* Hide Fields popover */}
+          <Popover
+            open={hideFieldsPopoverOpen}
+            anchorRef={hideFieldsButtonRef}
+            onClose={() => {
+              setHideFieldsPopoverOpen(false);
+              console.log('Hide fields popover closed via onClose');
+            }}
+            minWidth={280}
+          >
+            <div className="p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-primary mb-2">
+                  Hide Rows
+                </h3>
+                <p className="text-xs text-tertiary">
+                  Select rows to hide from the spreadsheet
+                </p>
+              </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {availableRows.map(rowNum => (
+                  <label
+                    key={rowNum}
+                    className="flex items-center gap-2 px-2 py-1 rounded hover:bg-secondary cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={hiddenFields.has(rowNum)}
+                      onChange={() => handleFieldToggle(rowNum)}
+                      className="w-4 h-4 text-primary border-borderTertiary rounded focus:ring-primary"
+                    />
+                    <span className="text-xs text-primary">Row {rowNum}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-between pt-2">
+                <button
+                  onClick={() => onHiddenFieldsChange?.(new Set())}
+                  className="text-xs text-primary hover:text-secondary-two"
+                >
+                  Show All
+                </button>
+                <button
+                  onClick={() => setHideFieldsPopoverOpen(false)}
+                  className="text-xs text-primary hover:text-secondary-two"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </Popover>
           {/* New Action button */}
           <ToolbarButton
             icon={actionIcon}

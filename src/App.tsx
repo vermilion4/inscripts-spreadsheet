@@ -14,8 +14,9 @@ import {
 function App() {
   const [sheets, setSheets] = useState<SheetData[]>([]);
   const [activeSheet, setActiveSheet] = useState<SheetData | null>(null);
+  // hiddenFields now stores row indices (numbers) to hide
+  const [hiddenFields, setHiddenFields] = useState<Set<number>>(new Set());
 
-  // Load sheets from localStorage on mount
   useEffect(() => {
     const storedSheets = loadSheetsFromStorage();
     setSheets(storedSheets);
@@ -81,7 +82,6 @@ function App() {
   };
 
   const handleImportSheet = (importedSheet: SheetData) => {
-    // Create a new sheet with the imported data
     const newSheet: SheetData = {
       ...importedSheet,
       id: `imported-${Date.now()}`,
@@ -113,6 +113,11 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  // hiddenFields now means hidden row indices
+  const handleHiddenFieldsChange = (newHiddenFields: Set<number>) => {
+    setHiddenFields(newHiddenFields);
+  };
+
   return (
     <div className="h-screen">
       <div className="sticky top-0 left-0 right-0 z-50">
@@ -121,6 +126,8 @@ function App() {
           activeSheet={activeSheet}
           onImportSheet={handleImportSheet}
           onExportSheet={handleExportSheet}
+          hiddenFields={hiddenFields}
+          onHiddenFieldsChange={handleHiddenFieldsChange}
         />
       </div>
       {activeSheet && (
@@ -128,6 +135,7 @@ function App() {
           sheetData={activeSheet}
           onDataChange={handleDataChange}
           onExtraColumnsChange={handleExtraColumnsChange}
+          hiddenFields={hiddenFields}
         />
       )}
       <Footer
