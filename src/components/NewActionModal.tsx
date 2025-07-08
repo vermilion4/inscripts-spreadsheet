@@ -190,9 +190,7 @@ const NewActionModal: React.FC<NewActionModalProps> = ({
                     onChange={() => handleColumnToggle(column.id)}
                     className="w-4 h-4 text-primary border-borderTertiary rounded focus:ring-primary"
                   />
-                  <span className="text-sm text-primary">
-                    {column.name} (index: {column.index})
-                  </span>
+                  <span className="text-sm text-primary">{column.name}</span>
                 </label>
               ))}
             </div>

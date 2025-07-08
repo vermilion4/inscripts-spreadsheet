@@ -1,46 +1,143 @@
-# Getting Started with Create React App
+# InScripts Spreadsheet
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, feature-rich spreadsheet application built with React 18 and TypeScript.
 
-## Available Scripts
+## 📸 Screenshots
 
-In the project directory, you can run:
+### Main Interface
 
-### `npm start`
+![Main Spreadsheet Interface](screenshots/main-interface.png)
+_The main spreadsheet interface showing the table, toolbar, and navigation_
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Cell Editing
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+![Cell Editing](screenshots/cell-editing.png)
+_Inline cell editing with keyboard navigation and validation_
 
-### `npm test`
+### New Action Modal
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+![New Action Modal](screenshots/new-action-modal.png)
+_Creating custom action headers with color coding and column selection_
 
-### `npm run build`
+### Hide Fields Tool
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+![Hide Fields](screenshots/hide-fields.png)
+_Row visibility management with persistent state_
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🚀 Features
 
-### `npm run eject`
+### Core Functionality
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- **Interactive Spreadsheet Table**: Built with `@tanstack/react-table` for high-performance data handling
+- **Cell Editing**: Inline cell editing with keyboard navigation (Enter to edit, Escape to cancel)
+- **Dynamic Headers**: Add custom action headers that span multiple columns with color coding
+- **Column Management**: Add, remove, and resize columns dynamically
+- **Row Management**: Hide/show rows and manage large datasets efficiently
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Data Management
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- **Import/Export**: Import from JSON templates or export current sheets to JSON
+- **Local Storage**: Automatic data persistence using browser localStorage
+- **Multiple Sheets**: Support for multiple spreadsheet sheets with easy switching
+- **Template System**: Pre-built templates for different use cases (Financial Data, Pending Reviews, Completed Projects)
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### UI/UX Features
 
-## Learn More
+- **Responsive Design**: Works on desktop and mobile devices
+- **Modern UI**: Clean, professional interface with Tailwind CSS styling
+- **Toolbar Actions**: Quick access to common functions (Hide fields, Sort, Filter, Cell view)
+- **Modal System**: Intuitive modals for complex operations
+- **Tooltips & Popovers**: Contextual help and information
+- **Keyboard Navigation**: Full keyboard support for power users
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Advanced Features
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- **Status Management**: Color-coded status indicators (In-process, Need to start, Complete, Blocked)
+- **Priority System**: Visual priority indicators (High, Medium, Low)
+- **URL Handling**: Clickable URLs with external link indicators
+- **Value Formatting**: Automatic formatting for currency values (₹)
+- **Row Selection**: Visual feedback for selected cells and rows
+
+## 🛠️ Setup & Installation
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/vermilion4/inscripts-spreadsheet.git
+cd inscripts-spreadsheet
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+The application will be available at `http://localhost:3000`
+
+### Available Scripts
+
+```bash
+npm start          # Start development server
+npm run build      # Build for production
+npm test           # Run tests
+npm run lint       # Run ESLint
+npm run lint:fix   # Fix ESLint issues
+npm run format     # Format code with Prettier
+npm run type-check # Run TypeScript type checking
+```
+
+## 🏗️ Architecture & Trade-offs
+
+### Technology Choices
+
+**React 18**:
+
+- ✅ Modern features like concurrent rendering
+- ✅ Stable ecosystem and extensive documentation
+- ❌ Larger bundle size compared to alternatives
+
+**@tanstack/react-table**:
+
+- ✅ Excellent performance for large datasets
+- ✅ Built-in sorting, filtering, and virtualization
+- ✅ TypeScript support
+- ❌ Learning curve for complex configurations
+
+**TypeScript**:
+
+- ✅ Type safety and better developer experience
+- ✅ Better IDE support and refactoring
+- ❌ Additional build complexity
+
+**Tailwind CSS**:
+
+- ✅ Rapid development with utility classes
+- ✅ Consistent design system
+- ❌ Larger CSS bundle in production
+
+### Performance Considerations
+
+**Pros**:
+
+- Efficient re-rendering with React 18
+- Optimized table rendering with @tanstack/react-table
+- Local storage for data persistence
+
+**Trade-offs**:
+
+- Client-side only (no server-side rendering)
+- Data stored in localStorage (limited by browser storage)
+- No offline support beyond localStorage
+
+## 📄 License
+
+This project is licensed under the MIT License.

@@ -88,6 +88,7 @@ interface ToolbarProps {
 
 const Toolbar = ({
   activeSheet,
+  onImportSheet,
   onExportSheet,
   hiddenFields = new Set(),
   onHiddenFieldsChange,
@@ -216,7 +217,7 @@ const Toolbar = ({
   }));
 
   // Convert any importTemplates with number[] columnSpans to string[]
-  const importTemplates = rawImportTemplates.map(template => ({
+  const processedImportTemplates = rawImportTemplates.map(template => ({
     ...template,
     dynamicHeaders: (template.dynamicHeaders || []).map(header => ({
       ...header,
@@ -227,6 +228,17 @@ const Toolbar = ({
           )
         : [],
     })),
+  }));
+
+  // Convert import templates to dropdown items format
+  const importItems = processedImportTemplates.map(template => ({
+    id: template.id,
+    label: template.name,
+    onClick: () => {
+      if (onImportSheet) {
+        onImportSheet(template);
+      }
+    },
   }));
 
   const exportItems = [
@@ -318,7 +330,7 @@ const Toolbar = ({
                     <span className="hidden sm:inline">Import</span>
                   </button>
                 }
-                items={importTemplates}
+                items={importItems}
                 width="w-48"
                 position="left"
               />
