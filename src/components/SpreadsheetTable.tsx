@@ -17,6 +17,7 @@ import {ReactComponent as ActionIcon} from '../assets/action.svg'
 
 import CaratDown from '../assets/carat-down.svg';
 import Ellipsis from '../assets/ellipsis.svg'
+import { FiPlus } from 'react-icons/fi';
 
 const prefilledRows = [
   {
@@ -76,7 +77,18 @@ const prefilledRows = [
   },
 ];
 
-const defaultData = [
+const defaultData: Array<{
+  job: string;
+  submitted: string;
+  status: string;
+  submitter: string;
+  url: string;
+  assigned: string;
+  priority: string;
+  due: string;
+  value: string;
+  [key: string]: any; // allow extra columns
+}> = [
   ...prefilledRows,
   ...Array.from({ length: 95 }, () => ({
     job: '',
@@ -335,6 +347,28 @@ function EditableCell({
 export default function SpreadsheetTable() {
   const [data, setData] = useState(() => [...defaultData]);
   const [selectedCell, setSelectedCell] = useState<{row: number, column: string} | null>(null);
+  const [extraColumns, setExtraColumns] = useState<{id: string, title: string}[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const prevExtraColumnsLength = useRef(0);
+
+  // Add column handler
+  const handleAddColumn = () => {
+    const nextIndex = extraColumns.length + 1;
+    const newId = `extra_${nextIndex}`;
+    setExtraColumns(cols => [...cols, { id: newId, title: `Title ${nextIndex + 5}` }]);
+    setData(old => old.map(row => ({ ...row, [newId]: row[newId] || '' })));
+  };
+
+  // Scroll to right when a new column is added
+  useEffect(() => {
+    if (extraColumns.length > prevExtraColumnsLength.current) {
+      // Scroll to the far right
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({ left: scrollRef.current.scrollWidth, behavior: 'smooth' });
+      }
+    }
+    prevExtraColumnsLength.current = extraColumns.length;
+  }, [extraColumns.length]);
 
   const handleCellChange = (row: number, column: string, value: string) => {
     setData(old => {
@@ -348,217 +382,248 @@ export default function SpreadsheetTable() {
     setSelectedCell({row, column});
   };
 
-  const columns = useMemo<ColumnDef<any, any>[]>(
-    () => [
-      {
-        id: 'row',
-        header: '#',
-        cell: info => info.row.index + 1,
-        size: 32,
-        enableSorting: false,
-      },
-      {
-        accessorKey: 'job',
-        header: () => (
-          <div className="flex items-center justify-between gap-1">
-            <span className="flex items-center gap-1">
-              <JobIcon className="w-3 h-3" />
-              Job Request
-            </span>
-            <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-          </div>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="job"
-            onChange={handleCellChange}
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'job'}
-            onSelect={() => handleCellSelect(info.row.index, 'job')}
-          />
-        ),
-        size: 236,
-      },
-      {
-        accessorKey: 'submitted',
-        header: () => (
-          <div className="flex items-center justify-between gap-1">
-            <span className="flex items-center gap-1">
-              <SubmittedIcon className="w-3 h-3" />
-              Submitted
-            </span>
-            <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-          </div>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="submitted"
-            onChange={handleCellChange}
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'submitted'}
-            onSelect={() => handleCellSelect(info.row.index, 'submitted')}
-            align="right"
-          />
-        ),
-        size: 124,
-      },
-      {
-        accessorKey: 'status',
-        header: () => (
-          <div className="flex items-center justify-between gap-1">
-            <span className="flex items-center gap-1">
-              <StatusIcon className="w-3 h-3" />
-              Status
-            </span>
-            <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-          </div>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="status"
-            onChange={handleCellChange}
-            isStatus
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'status'}
-            onSelect={() => handleCellSelect(info.row.index, 'status')}
-          />
-        ),
-        size: 140,
-      },
-      {
-        accessorKey: 'submitter',
-        header: () => (
-          <div className="flex items-center justify-between gap-1">
-            <span className="flex items-center gap-1">
-              <SubmitterIcon className="w-3 h-3" />
-              Submitter
-            </span>
-            <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-          </div>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="submitter"
-            onChange={handleCellChange}
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'submitter'}
-            onSelect={() => handleCellSelect(info.row.index, 'submitter')}
-          />
-        ),
-        size: 120,
-      },
-      {
-        accessorKey: 'url',
-        header: () => (
-          <div className="flex items-center justify-between gap-1">
-            <span className="flex items-center gap-1">
-              <URLIcon className="w-3 h-3" />
-              URL
-            </span>
-            <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
-          </div>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="url"
-            onChange={handleCellChange}
-            isUrl
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'url'}
-            onSelect={() => handleCellSelect(info.row.index, 'url')}
-          />
-        ),
-        size: 180,
-      },
-      {
-        accessorKey: 'assigned',
-        header: () => (
+  // Build columns array
+  const baseColumns: ColumnDef<any, any>[] = [
+    {
+      id: 'row',
+      header: '#',
+      cell: info => info.row.index + 1,
+      size: 32,
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'job',
+      header: () => (
+        <div className="flex items-center justify-between gap-1">
           <span className="flex items-center gap-1">
-            <AssignedIcon className="w-3 h-3" />
-            Assigned
+            <JobIcon className="w-3 h-3" />
+            Job Request
           </span>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="assigned"
-            onChange={handleCellChange}
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'assigned'}
-            onSelect={() => handleCellSelect(info.row.index, 'assigned')}
-          />
-        ),
-        size: 120,
-      },
-      {
-        accessorKey: 'priority',
-        header: () => (
+          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
+        </div>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="job"
+          onChange={handleCellChange}
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'job'}
+          onSelect={() => handleCellSelect(info.row.index, 'job')}
+        />
+      ),
+      size: 236,
+    },
+    {
+      accessorKey: 'submitted',
+      header: () => (
+        <div className="flex items-center justify-between gap-1">
           <span className="flex items-center gap-1">
-            Priority
+            <SubmittedIcon className="w-3 h-3" />
+            Submitted
           </span>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="priority"
-            onChange={handleCellChange}
-            isPriority
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'priority'}
-            onSelect={() => handleCellSelect(info.row.index, 'priority')}
-          />
-        ),
-        size: 100,
-      },
-      {
-        accessorKey: 'due',
-        header: () => (
+          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
+        </div>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="submitted"
+          onChange={handleCellChange}
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'submitted'}
+          onSelect={() => handleCellSelect(info.row.index, 'submitted')}
+          align="right"
+        />
+      ),
+      size: 124,
+    },
+    {
+      accessorKey: 'status',
+      header: () => (
+        <div className="flex items-center justify-between gap-1">
           <span className="flex items-center gap-1">
-            Due Date
+            <StatusIcon className="w-3 h-3" />
+            Status
           </span>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="due"
-            onChange={handleCellChange}
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'due'}
-            onSelect={() => handleCellSelect(info.row.index, 'due')}
-            align="right"
-          />
-        ),
-        size: 120,
-      },
-      {
-        accessorKey: 'value',
-        header: () => (
+          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
+        </div>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="status"
+          onChange={handleCellChange}
+          isStatus
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'status'}
+          onSelect={() => handleCellSelect(info.row.index, 'status')}
+        />
+      ),
+      size: 140,
+    },
+    {
+      accessorKey: 'submitter',
+      header: () => (
+        <div className="flex items-center justify-between gap-1">
           <span className="flex items-center gap-1">
-            Est. Value
+            <SubmitterIcon className="w-3 h-3" />
+            Submitter
           </span>
-        ),
-        cell: info => (
-          <EditableCell
-            value={info.getValue() || ''}
-            rowIndex={info.row.index}
-            columnId="value"
-            onChange={handleCellChange}
-            isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'value'}
-            onSelect={() => handleCellSelect(info.row.index, 'value')}
-            renderValue={formatLakh}
-            align="right"
-          />
-        ),
-        size: 160,
-      },
-    ],
-    [selectedCell]
-  );
+          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
+        </div>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="submitter"
+          onChange={handleCellChange}
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'submitter'}
+          onSelect={() => handleCellSelect(info.row.index, 'submitter')}
+        />
+      ),
+      size: 120,
+    },
+    {
+      accessorKey: 'url',
+      header: () => (
+        <div className="flex items-center justify-between gap-1">
+          <span className="flex items-center gap-1">
+            <URLIcon className="w-3 h-3" />
+            URL
+          </span>
+          <img src={CaratDown} alt="carat-down" className="w-2.5 h-[5px]" />
+        </div>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="url"
+          onChange={handleCellChange}
+          isUrl
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'url'}
+          onSelect={() => handleCellSelect(info.row.index, 'url')}
+        />
+      ),
+      size: 180,
+    },
+    {
+      accessorKey: 'assigned',
+      header: () => (
+        <span className="flex items-center gap-1">
+          <AssignedIcon className="w-3 h-3" />
+          Assigned
+        </span>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="assigned"
+          onChange={handleCellChange}
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'assigned'}
+          onSelect={() => handleCellSelect(info.row.index, 'assigned')}
+        />
+      ),
+      size: 120,
+    },
+    {
+      accessorKey: 'priority',
+      header: () => (
+        <span className="flex items-center gap-1">
+          Priority
+        </span>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="priority"
+          onChange={handleCellChange}
+          isPriority
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'priority'}
+          onSelect={() => handleCellSelect(info.row.index, 'priority')}
+        />
+      ),
+      size: 100,
+    },
+    {
+      accessorKey: 'due',
+      header: () => (
+        <span className="flex items-center gap-1">
+          Due Date
+        </span>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="due"
+          onChange={handleCellChange}
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'due'}
+          onSelect={() => handleCellSelect(info.row.index, 'due')}
+          align="right"
+        />
+      ),
+      size: 120,
+    },
+    {
+      accessorKey: 'value',
+      header: () => (
+        <span className="flex items-center gap-1">
+          Est. Value
+        </span>
+      ),
+      cell: info => (
+        <EditableCell
+          value={info.getValue() || ''}
+          rowIndex={info.row.index}
+          columnId="value"
+          onChange={handleCellChange}
+          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'value'}
+          onSelect={() => handleCellSelect(info.row.index, 'value')}
+          renderValue={formatLakh}
+          align="right"
+        />
+      ),
+      size: 160,
+    },
+  ];
+
+  // Insert extra columns before the plus column
+  const dynamicExtraColumns = extraColumns.map((col, idx) => ({
+    id: col.id,
+    header: () => col.title,
+    cell: (info: any) => (
+      <EditableCell
+        value={info.row.original[col.id] || ''}
+        rowIndex={info.row.index}
+        columnId={col.id}
+        onChange={handleCellChange}
+        isSelected={selectedCell?.row === info.row.index && selectedCell?.column === col.id}
+        onSelect={() => handleCellSelect(info.row.index, col.id)}
+      />
+    ),
+    size: 124,
+  }));
+
+  // Plus column (always last)
+  const plusColumn = {
+    id: 'add-more',
+    header: () => null,
+    cell: () => null,
+    size: 32,
+    enableSorting: false,
+  };
+
+  // Final columns array: base columns + extra columns + plus column
+  const columns = [
+    ...baseColumns.slice(0, 10), // up to value column
+    ...dynamicExtraColumns,
+    plusColumn,
+  ];
 
   const table = useReactTable({
     data,
@@ -567,45 +632,51 @@ export default function SpreadsheetTable() {
   });
 
   return (
-    <div className="overflow-x-auto bg-white">
+    <div className="overflow-x-auto bg-white" ref={scrollRef}>
       <table className="w-full relative" style={{ borderCollapse: 'collapse', minWidth: '1200px' }}>
         <thead>
           {/* Custom top header row */}
           <tr>
-            <th className="bg-transparent border-none p-0" style={{ width: 32 }}></th>
-            {/* Q3 Financial Overview spanning Job Request, Submitted, Status, Submitter */}
-            <th colSpan={4} className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none">
+            <th className="bg-white border-none p-0 sticky left-0 z-20" style={{ width: 32, minWidth: 32, maxWidth: 32 }}></th>
+            <th colSpan={4} className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none" style={{ minWidth: 236*4 }}>
               <div className="flex items-center gap-3 h-6">
                 <span className="text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal">
-                <IoLinkSharp size={16} color='#1A8CFF' />
+                  <IoLinkSharp size={16} color='#1A8CFF' />
                   Q3 Financial Overview</span>
                   <GrPowerCycle className='animate-spin' color='#FA6736' size={16} />
               </div>
             </th>
-            <th className="bg-transparent border-none p-0" style={{ width: 180 }}></th>
-            {/* ABC above Assigned */}
-            <th className="bg-[#D2E0D4] text-[#505450] font-medium text-sm h-8 px-4 text-center border-none">
+            <th className="bg-transparent border-none p-0" style={{ width: 180, minWidth: 180, maxWidth: 180 }}></th>
+            <th className="bg-[#D2E0D4] text-[#505450] font-medium text-sm h-8 px-4 text-center border-none" style={{ minWidth: 120, maxWidth: 120 }}>
               <span className="flex items-center justify-center gap-2 whitespace-nowrap">
                 <ActionIcon className='w-3.5 h-3.5 custom-fill' />
                 ABC
                 <img src={Ellipsis} alt="ellipsis" />
                 </span>
             </th>
-            {/* Answer a question spanning Priority and Due Date */}
-            <th colSpan={2} className="bg-[#DCCFFC] text-textDark font-medium text-sm h-8 px-4 text-center border-none">
+            <th colSpan={2} className="bg-[#DCCFFC] text-textDark font-medium text-sm h-8 px-4 text-center border-none" style={{ minWidth: 220, maxWidth: 220 }}>
               <span className="flex items-center justify-center whitespace-nowrap gap-2">
                 <ActionIcon className='w-3.5 h-3.5' />
                 Answer a question
                 <img src={Ellipsis} alt="ellipsis" />
                 </span>
             </th>
-            {/* Extract above Est. Value */}
-            <th className="bg-[#FAC2AF] text-[#695149] font-medium text-sm h-8 px-4 text-center border-none">
+            <th className="bg-[#FAC2AF] text-[#695149] font-medium text-sm h-8 px-4 text-center border-none" style={{ minWidth: 160, maxWidth: 160 }}>
               <span className="flex items-center justify-center gap-2 whitespace-nowrap">
                 <ActionIcon className='w-3.5 h-3.5' />
                 Extract
                 <img src={Ellipsis} alt="ellipsis" />
                 </span>
+            </th>
+            {/* Render blank th for each extra column */}
+            {extraColumns.map((col, idx) => (
+              <th key={col.id} className=" p-0" style={{ width: 124, minWidth: 124, maxWidth: 124 }}></th>
+            ))}
+            {/* Plus column header with plus icon, sticky right */}
+            <th className="bg-borderTertiary p-0 border-dotted-custom sticky right-0 z-20" style={{ width: 124, minWidth: 124, maxWidth: 124 }}>
+              <button onClick={handleAddColumn} className="w-full h-full flex items-center justify-center focus:outline-none">
+                <FiPlus size={20} color='#04071E' />
+              </button>
             </th>
           </tr>
           {/* Existing column headers */}
@@ -614,10 +685,16 @@ export default function SpreadsheetTable() {
               headerGroup.headers.map((header, index) => (
                 <th
                   key={header.id}
-                  style={{ width: header.getSize() }}
-                  className={`h-8 text-xs border border-[#F6F6F6] bg-borderTertiary ${
+                  style={{
+                    width: header.getSize(),
+                    minWidth: header.getSize(),
+                    maxWidth: header.getSize(),
+                    borderTop: '1px solid #F6F6F6',
+                    borderBottom: '1px solid #F6F6F6',
+                  }}
+                  className={`${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] ${
                     index === 0
-                      ? 'text-center text-lg text-disabledPrimary italic font-normal sticky left-0 z-10 after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
+                      ? 'text-center text-lg text-disabledPrimary italic font-normal after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
                       : index === 6
                       ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
                       : (index === 7 || index === 8)
@@ -636,15 +713,22 @@ export default function SpreadsheetTable() {
         <tbody>
           {table.getRowModel().rows.map(row => (
             <tr key={row.id}>
-              {row.getVisibleCells().map((cell, index) => (
+              {table.getAllColumns().map((column, index) => (
                 <td
-                  key={cell.id}
-                  style={{ width: cell.column.getSize() }}
-                  className={`h-8 border border-[#F6F6F6] text-xs align-middle bg-white hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
-                    index === 0 ? 'text-center text-tertiary sticky left-0 z-10 after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]' : 'text-left text-primary p-0'
+                  key={column.id}
+                  style={{
+                    width: column.getSize(),
+                    minWidth: column.getSize(),
+                    maxWidth: column.getSize(),
+                    backgroundColor: index === table.getAllColumns().length - 1 ? '#fff' : undefined,
+                    borderTop: '1px solid #F6F6F6',
+                    borderBottom: '1px solid #F6F6F6',
+                  }}
+                  className={`h-8 border border-[#F6F6F6] ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
+                    index === 0 ? 'text-center text-tertiary after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]' : 'text-left text-primary p-0'
                   }`}
                 >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  {flexRender(column.columnDef.cell, { ...row.getVisibleCells()[index]?.getContext?.() })}
                 </td>
               ))}
             </tr>

@@ -14,3 +14,9 @@ body {
 .custom-fill path {
   fill: #A3ACA3 !important;
 }
+
+.border-dotted-custom {
+  border-style: dashed;
+  border-width: 0 2px 0 2px;
+  border-color: #CBCBCB;
+}
