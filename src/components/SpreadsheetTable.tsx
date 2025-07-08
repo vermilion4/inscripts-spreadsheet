@@ -21,7 +21,6 @@ import Pound from '../assets/pound.svg';
 import Ellipsis from '../assets/ellipsis.svg';
 import {
   FiPlus,
-  FiSettings,
   FiTrash2,
   FiEdit3,
   FiCopy,
@@ -388,7 +387,7 @@ const createSimpleHeader = (title: string, icon?: React.ReactNode) => (
 
 // Helper function to create EditableCell with common props
 const createEditableCell = (
-  info: any,
+  info: { getValue: () => string | undefined; row: { index: number } },
   columnId: string,
   handleCellChange: (row: number, column: string, value: string) => void,
   handleCellSelect: (row: number, column: string) => void,
@@ -536,7 +535,10 @@ export default function SpreadsheetTable({
         ),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'job',
           handleCellChange,
           handleCellSelect,
@@ -555,7 +557,10 @@ export default function SpreadsheetTable({
         ),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'submitted',
           handleCellChange,
           handleCellSelect,
@@ -575,7 +580,10 @@ export default function SpreadsheetTable({
         ),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'status',
           handleCellChange,
           handleCellSelect,
@@ -595,7 +603,10 @@ export default function SpreadsheetTable({
         ),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'submitter',
           handleCellChange,
           handleCellSelect,
@@ -614,7 +625,10 @@ export default function SpreadsheetTable({
         ),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'url',
           handleCellChange,
           handleCellSelect,
@@ -629,7 +643,10 @@ export default function SpreadsheetTable({
         createSimpleHeader('Assigned', <AssignedIcon className="w-3 h-3" />),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'assigned',
           handleCellChange,
           handleCellSelect,
@@ -642,7 +659,10 @@ export default function SpreadsheetTable({
       header: () => createSimpleHeader('Priority'),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'priority',
           handleCellChange,
           handleCellSelect,
@@ -656,7 +676,10 @@ export default function SpreadsheetTable({
       header: () => createSimpleHeader('Due Date'),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'due',
           handleCellChange,
           handleCellSelect,
@@ -670,7 +693,10 @@ export default function SpreadsheetTable({
       header: () => createSimpleHeader('Est. Value'),
       cell: info =>
         createEditableCell(
-          info,
+          {
+            getValue: () => info.getValue() as string,
+            row: { index: info.row.index },
+          },
           'value',
           handleCellChange,
           handleCellSelect,
