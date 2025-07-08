@@ -18,6 +18,7 @@ import {
 import Tooltip from '../ui/Tooltip';
 import Dropdown from '../ui/Dropdown';
 import Popover from '../ui/Popover';
+import Modal from '../ui/Modal';
 import NewActionModal from './NewActionModal';
 import { SheetData, DynamicHeader } from '../constants/SheetData';
 import { importTemplates as rawImportTemplates } from '../constants/Toolbar';
@@ -81,6 +82,7 @@ interface ToolbarProps {
   activeSheet?: SheetData | null;
   onImportSheet?: (sheet: SheetData) => void;
   onExportSheet?: (sheet: SheetData) => void;
+  onExportCSV?: (sheet: SheetData) => void;
   hiddenFields?: Set<number>;
   onHiddenFieldsChange?: (hiddenFields: Set<number>) => void;
   onDynamicHeadersChange?: (headers: DynamicHeader[]) => void;
@@ -90,6 +92,7 @@ const Toolbar = ({
   activeSheet,
   onImportSheet,
   onExportSheet,
+  onExportCSV,
   hiddenFields = new Set(),
   onHiddenFieldsChange,
   onDynamicHeadersChange,
@@ -100,6 +103,7 @@ const Toolbar = ({
   const [copied, setCopied] = useState(false);
   const [hideFieldsPopoverOpen, setHideFieldsPopoverOpen] = useState(false);
   const [newActionModalOpen, setNewActionModalOpen] = useState(false);
+  const [embedModalOpen, setEmbedModalOpen] = useState(false);
 
   const shareButtonRef = useRef<HTMLButtonElement>(null);
   const hideFieldsButtonRef = useRef<HTMLButtonElement>(null);
@@ -193,7 +197,7 @@ const Toolbar = ({
 
   const handleCopyLink = async () => {
     const shareLink =
-      'https://sheets.example.com/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing';
+      window.location.href || 'https://inscripts-spreadsheet-ada.vercel.app/';
     try {
       await navigator.clipboard.writeText(shareLink);
       setCopied(true);
@@ -206,6 +210,12 @@ const Toolbar = ({
   const handleExportSheet = () => {
     if (activeSheet) {
       onExportSheet?.(activeSheet);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (activeSheet) {
+      onExportCSV?.(activeSheet);
     }
   };
 
@@ -248,17 +258,23 @@ const Toolbar = ({
       icon: <FiDownload className="w-4 h-4" />,
       onClick: handleExportSheet,
     },
+    {
+      id: 'export-csv',
+      label: 'Export as CSV',
+      icon: <FiDownload className="w-4 h-4" />,
+      onClick: handleExportCSV,
+    },
   ];
 
   const shareLink =
-    'https://sheets.example.com/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing';
+    window.location.href || 'https://inscripts-spreadsheet-ada.vercel.app/';
 
   return (
     <>
-      <div className="h-14 px-4 py-2 flex items-center bg-white border-b border-borderTertiary relative">
+      <div className="relative flex items-center px-4 py-2 bg-white border-b h-14 border-borderTertiary">
         <div className="flex items-center justify-between w-full gap-2 lg:gap-4">
           {/* Left section */}
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+          <div className="flex items-center flex-1 min-w-0 gap-1 sm:gap-2">
             {/* Tool bar toggle/dropdown */}
             <div className="lg:hidden">
               <Dropdown
@@ -288,7 +304,7 @@ const Toolbar = ({
               />
             </button>
             {/* Divider */}
-            <div className="h-6 w-px border-r border-borderTertiary"></div>
+            <div className="w-px h-6 border-r border-borderTertiary"></div>
             {/* Desktop tools */}
             <div
               className={`hidden lg:flex items-center gap-1 transition-all duration-300 ${isToolbarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
@@ -319,13 +335,13 @@ const Toolbar = ({
             </div>
           </div>
           {/* Right section */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <div className="flex items-center flex-shrink-0 gap-1 sm:gap-2">
             {/* Desktop right tools */}
             <div className="flex items-center gap-1 sm:gap-2">
               {/* Import dropdown */}
               <Dropdown
                 trigger={
-                  <button className="flex items-center gap-1 text-xs sm:text-sm text-secondary-two px-3 py-2 hover:bg-secondary transition whitespace-nowrap border border-borderTertiary rounded-md">
+                  <button className="flex items-center gap-1 px-3 py-2 text-xs transition border rounded-md sm:text-sm text-secondary-two hover:bg-secondary whitespace-nowrap border-borderTertiary">
                     <img src={importIcon} alt="Import" className="w-4 h-4" />
                     <span className="hidden sm:inline">Import</span>
                   </button>
@@ -343,7 +359,7 @@ const Toolbar = ({
                   </button>
                 }
                 items={exportItems}
-                width="w-40"
+                width="w-48"
                 position="left"
               />
             </div>
@@ -352,7 +368,7 @@ const Toolbar = ({
               <Tooltip content="Share" position="bottom">
                 <button
                   ref={shareButtonRef}
-                  className="flex items-center gap-1 text-xs sm:text-sm text-secondary-two px-3 py-2 hover:bg-secondary transition whitespace-nowrap border border-borderTertiary rounded-md"
+                  className="flex items-center gap-1 px-3 py-2 text-xs transition border rounded-md sm:text-sm text-secondary-two hover:bg-secondary whitespace-nowrap border-borderTertiary"
                   onClick={handleShareClick}
                   type="button"
                 >
@@ -368,7 +384,7 @@ const Toolbar = ({
               >
                 <div className="p-4 space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium text-primary mb-2">
+                    <h3 className="mb-2 text-sm font-medium text-primary">
                       Share "Spreadsheet 3"
                     </h3>
                     <p className="text-xs text-tertiary">
@@ -384,11 +400,11 @@ const Toolbar = ({
                         type="text"
                         value={shareLink}
                         readOnly
-                        className="flex-1 px-3 py-2 text-xs bg-secondary border border-borderTertiary rounded-md text-tertiary"
+                        className="flex-1 px-3 py-2 text-xs border rounded-md bg-secondary border-borderTertiary text-tertiary"
                       />
                       <button
                         onClick={handleCopyLink}
-                        className="flex items-center gap-1 px-3 py-2 text-xs bg-default text-secondary rounded-md hover:opacity-90 transition"
+                        className="flex items-center gap-1 px-3 py-2 text-xs transition rounded-md bg-default text-secondary hover:opacity-90"
                       >
                         {copied ? (
                           <FiCheck className="w-3 h-3" />
@@ -401,20 +417,20 @@ const Toolbar = ({
                   </div>
                   <div className="flex flex-col gap-2 pt-2">
                     <button
-                      className="flex items-center gap-2 px-3 py-2 rounded hover:bg-secondary text-xs text-primary"
+                      className="flex items-center gap-2 px-3 py-2 text-xs rounded hover:bg-secondary text-primary"
                       onClick={() => alert('Share with specific people')}
                     >
                       <FiUsers className="w-4 h-4" /> Share with specific people
                     </button>
-                    <button
-                      className="flex items-center gap-2 px-3 py-2 rounded hover:bg-secondary text-xs text-primary"
-                      onClick={() => alert('Send via email')}
+                    <a
+                      href={`mailto:?subject=Spreadsheet 3&body=Check out this spreadsheet: ${shareLink}`}
+                      className="flex items-center gap-2 px-3 py-2 text-xs rounded hover:bg-secondary text-primary"
                     >
                       <FiMail className="w-4 h-4" /> Send via email
-                    </button>
+                    </a>
                     <button
-                      className="flex items-center gap-2 px-3 py-2 rounded hover:bg-secondary text-xs text-primary"
-                      onClick={() => alert('Get embed code')}
+                      className="flex items-center gap-2 px-3 py-2 text-xs rounded hover:bg-secondary text-primary"
+                      onClick={() => setEmbedModalOpen(true)}
                     >
                       <FiExternalLink className="w-4 h-4" /> Get embed code
                     </button>
@@ -434,24 +450,24 @@ const Toolbar = ({
             >
               <div className="p-4 space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium text-primary mb-2">
+                  <h3 className="mb-2 text-sm font-medium text-primary">
                     Hide Rows
                   </h3>
                   <p className="text-xs text-tertiary">
                     Select rows to hide from the spreadsheet
                   </p>
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="space-y-2 overflow-y-auto max-h-60">
                   {availableRows.map(rowNum => (
                     <label
                       key={rowNum}
-                      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-secondary cursor-pointer"
+                      className="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-secondary"
                     >
                       <input
                         type="checkbox"
                         checked={hiddenFields.has(rowNum)}
                         onChange={() => handleFieldToggle(rowNum)}
-                        className="w-4 h-4 text-primary border-borderTertiary rounded focus:ring-primary"
+                        className="w-4 h-4 rounded text-primary border-borderTertiary focus:ring-primary"
                       />
                       <span className="text-xs text-primary">Row {rowNum}</span>
                     </label>
@@ -493,6 +509,57 @@ const Toolbar = ({
         availableColumns={getActualColumns(activeSheet)}
         existingHeaders={activeSheet?.dynamicHeaders || []}
       />
+
+      {/* Embed Code Modal */}
+      <Modal
+        isOpen={embedModalOpen}
+        onClose={() => setEmbedModalOpen(false)}
+        title="Embed Code"
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="mb-3 text-sm text-tertiary">
+              Copy and paste this code to embed the spreadsheet in your website:
+            </p>
+            <div className="relative">
+              <textarea
+                readOnly
+                value={`<iframe src="${shareLink}" width="100%" height="600" frameborder="0" style="border: none; overflow: hidden;"></iframe>`}
+                className="w-full h-32 p-3 font-mono text-sm border rounded-md resize-none bg-gray-50 border-borderTertiary"
+              />
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      `<iframe src="${shareLink}" width="100%" height="600" frameborder="0" style="border: none; overflow: hidden;"></iframe>`
+                    );
+                    alert('Embed code copied to clipboard!');
+                  } catch (err) {
+                    console.error('Failed to copy embed code:', err);
+                  }
+                }}
+                className="absolute px-3 py-1 text-xs transition rounded top-2 right-2 bg-default text-secondary hover:opacity-90"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+          <div className="p-4 rounded-md bg-gray-50">
+            <h4 className="mb-2 text-sm font-medium text-primary">Preview:</h4>
+            <div className="overflow-hidden border rounded-md border-borderTertiary">
+              <iframe
+                src={shareLink}
+                width="100%"
+                height="300"
+                frameBorder="0"
+                style={{ border: 'none', overflow: 'hidden' }}
+                title="Spreadsheet Preview"
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

@@ -24,6 +24,11 @@ _Creating custom action headers with color coding and column selection_
 ![Hide Fields](screenshots/hide-fields.png)
 _Row visibility management with persistent state_
 
+### Get Embed Code
+
+![Get Embed Code](screenshots/get-embed-code.png)
+_Get embed code for the spreadsheet_
+
 ---
 
 ## 🚀 Features
@@ -39,13 +44,14 @@ _Row visibility management with persistent state_
 ### Data Management
 
 - **Import/Export**: Import from JSON templates or export current sheets to JSON
+- **CSV Export**: Export spreadsheet data as CSV format for external applications
 - **Local Storage**: Automatic data persistence using browser localStorage
 - **Multiple Sheets**: Support for multiple spreadsheet sheets with easy switching
 - **Template System**: Pre-built templates for different use cases (Financial Data, Pending Reviews, Completed Projects)
 
 ### UI/UX Features
 
-- **Responsive Design**: Works on desktop and mobile devices
+- **Responsive Design**: Works on desktop and mobile devices and column resizing
 - **Modern UI**: Clean, professional interface with Tailwind CSS styling
 - **Toolbar Actions**: Quick access to common functions (Hide fields, Sort, Filter, Cell view)
 - **Modal System**: Intuitive modals for complex operations
@@ -59,6 +65,7 @@ _Row visibility management with persistent state_
 - **URL Handling**: Clickable URLs with external link indicators
 - **Value Formatting**: Automatic formatting for currency values (₹)
 - **Row Selection**: Visual feedback for selected cells and rows
+- **Sharing & Collaboration**: Share spreadsheets via email, copy links, and embed in websites
 
 ## 🛠️ Setup & Installation
 

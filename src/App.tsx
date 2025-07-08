@@ -12,6 +12,58 @@ import {
   saveActiveSheet,
 } from './constants/SheetData';
 
+// Helper function to convert sheet data to CSV format
+const convertToCSV = (sheet: SheetData): string => {
+  const headers = [
+    'Row',
+    'Job Request',
+    'Submitted',
+    'Status',
+    'Submitter',
+    'URL',
+    'Assigned',
+    'Priority',
+    'Due Date',
+    'Est. Value',
+  ];
+
+  // Add any extra column headers
+  if (sheet.extraColumns) {
+    headers.push(...sheet.extraColumns.map(col => col.title));
+  }
+
+  // Create CSV header row
+  let csv = headers.join(',') + '\n';
+
+  // Add data rows
+  sheet.data.forEach((row, index) => {
+    const rowData = [
+      index + 1, // Row number
+      row.job || '',
+      row.submitted || '',
+      row.status || '',
+      row.submitter || '',
+      row.url || '',
+      row.assigned || '',
+      row.priority || '',
+      row.due || '',
+      row.value || '',
+      // Add any extra column values
+      ...(sheet.extraColumns?.map(col => row[col.id] || '') || []),
+    ];
+
+    // Escape any commas in the data
+    const escapedRow = rowData.map(cell => {
+      const cellStr = String(cell);
+      return cellStr.includes(',') ? `"${cellStr}"` : cellStr;
+    });
+
+    csv += escapedRow.join(',') + '\n';
+  });
+
+  return csv;
+};
+
 function App() {
   const [sheets, setSheets] = useState<SheetData[]>([]);
   const [activeSheet, setActiveSheet] = useState<SheetData | null>(null);
@@ -132,6 +184,21 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportCSV = (sheetToExport: SheetData) => {
+    // Create a CSV blob and download it
+    const csvData = convertToCSV(sheetToExport);
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${sheetToExport.name.replace(/\s+/g, '_')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // hiddenFields now means hidden row indices
   const handleHiddenFieldsChange = (newHiddenFields: Set<number>) => {
     setHiddenFields(newHiddenFields);
@@ -145,6 +212,7 @@ function App() {
           activeSheet={activeSheet}
           onImportSheet={handleImportSheet}
           onExportSheet={handleExportSheet}
+          onExportCSV={handleExportCSV}
           hiddenFields={hiddenFields}
           onHiddenFieldsChange={handleHiddenFieldsChange}
           onDynamicHeadersChange={handleDynamicHeadersChange}
