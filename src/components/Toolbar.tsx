@@ -112,13 +112,13 @@ const Toolbar = ({
   ];
 
   const handleToolClick = (toolLabel: string) => {
-    alert(`Tool clicked: ${toolLabel}`);
-
     if (toolLabel === 'Hide fields') {
       // For hide fields, just toggle the popover without affecting active state
       setHideFieldsPopoverOpen(!hideFieldsPopoverOpen);
       return;
     }
+
+    alert(`Tool clicked: ${toolLabel}`);
 
     // For other tools, handle normal activation/deactivation
     const newActiveTools = new Set(activeTools);

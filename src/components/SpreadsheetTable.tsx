@@ -328,6 +328,7 @@ export default function SpreadsheetTable({
     row: number;
     column: string;
   } | null>(null);
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
   const [extraColumns, setExtraColumns] = useState<
     { id: string; title: string }[]
   >(sheetData?.extraColumns || []);
@@ -395,6 +396,10 @@ export default function SpreadsheetTable({
     setSelectedCell({ row, column });
   };
 
+  const handleColumnSelect = (columnId: string) => {
+    setSelectedColumn(selectedColumn === columnId ? null : columnId);
+  };
+
   // Build columns array
   const baseColumns: ColumnDef<RowData>[] = [
     {
@@ -407,7 +412,10 @@ export default function SpreadsheetTable({
     {
       accessorKey: 'job',
       header: () => (
-        <div className="flex items-center justify-between gap-1">
+        <div
+          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
+          onClick={() => handleColumnSelect('job')}
+        >
           <span className="flex items-center gap-1">
             <JobIcon className="w-3 h-3" />
             Job Request
@@ -433,7 +441,10 @@ export default function SpreadsheetTable({
     {
       accessorKey: 'submitted',
       header: () => (
-        <div className="flex items-center justify-between gap-1">
+        <div
+          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
+          onClick={() => handleColumnSelect('submitted')}
+        >
           <span className="flex items-center gap-1">
             <SubmittedIcon className="w-3 h-3" />
             Submitted
@@ -460,7 +471,10 @@ export default function SpreadsheetTable({
     {
       accessorKey: 'status',
       header: () => (
-        <div className="flex items-center justify-between gap-1">
+        <div
+          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
+          onClick={() => handleColumnSelect('status')}
+        >
           <span className="flex items-center gap-1">
             <StatusIcon className="w-3 h-3" />
             Status
@@ -487,7 +501,10 @@ export default function SpreadsheetTable({
     {
       accessorKey: 'submitter',
       header: () => (
-        <div className="flex items-center justify-between gap-1">
+        <div
+          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
+          onClick={() => handleColumnSelect('submitter')}
+        >
           <span className="flex items-center gap-1">
             <SubmitterIcon className="w-3 h-3" />
             Submitter
@@ -513,7 +530,10 @@ export default function SpreadsheetTable({
     {
       accessorKey: 'url',
       header: () => (
-        <div className="flex items-center justify-between gap-1">
+        <div
+          className="flex items-center justify-between gap-1 cursor-pointer px-1 py-1 rounded"
+          onClick={() => handleColumnSelect('url')}
+        >
           <span className="flex items-center gap-1">
             <URLIcon className="w-3 h-3" />
             URL
@@ -540,10 +560,10 @@ export default function SpreadsheetTable({
     {
       accessorKey: 'assigned',
       header: () => (
-        <span className="flex items-center gap-1">
+        <div className="flex items-center gap-1">
           <AssignedIcon className="w-3 h-3" />
           Assigned
-        </span>
+        </div>
       ),
       cell: info => (
         <EditableCell
@@ -562,7 +582,7 @@ export default function SpreadsheetTable({
     },
     {
       accessorKey: 'priority',
-      header: () => <span className="flex items-center gap-1">Priority</span>,
+      header: () => <div className="flex items-center gap-1">Priority</div>,
       cell: info => (
         <EditableCell
           value={(info.getValue() as string) || ''}
@@ -581,7 +601,7 @@ export default function SpreadsheetTable({
     },
     {
       accessorKey: 'due',
-      header: () => <span className="flex items-center gap-1">Due Date</span>,
+      header: () => <div className="flex items-center gap-1">Due Date</div>,
       cell: info => (
         <EditableCell
           value={(info.getValue() as string) || ''}
@@ -600,7 +620,7 @@ export default function SpreadsheetTable({
     },
     {
       accessorKey: 'value',
-      header: () => <span className="flex items-center gap-1">Est. Value</span>,
+      header: () => <div className="flex items-center gap-1">Est. Value</div>,
       cell: info => (
         <EditableCell
           value={(info.getValue() as string) || ''}
@@ -623,7 +643,7 @@ export default function SpreadsheetTable({
   // Insert extra columns before the plus column
   const dynamicExtraColumns: ColumnDef<RowData>[] = extraColumns.map(col => ({
     id: col.id,
-    header: () => col.title,
+    header: () => <div className="flex items-center gap-1">{col.title}</div>,
     cell: (info: { row: Row<RowData> }) => (
       <EditableCell
         value={info.row.original[col.id] || ''}
@@ -751,63 +771,75 @@ export default function SpreadsheetTable({
           {/* Existing column headers */}
           <tr>
             {table.getHeaderGroups().map(headerGroup =>
-              headerGroup.headers.map((header, index) => (
-                <th
-                  key={header.id}
-                  style={{
-                    width: header.getSize(),
-                    minWidth: header.getSize(),
-                    maxWidth: header.getSize(),
-                    borderTop: '1px solid #F6F6F6',
-                    borderBottom: '1px solid #F6F6F6',
-                  }}
-                  className={`${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] ${
-                    index === 0
-                      ? 'text-center text-lg text-disabledPrimary italic font-normal after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
-                      : index === 6
-                        ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
-                        : index === 7 || index === 8
-                          ? 'text-left px-2 font-semibold !bg-[#EAE3FC] text-[#655C80]'
-                          : index === 9
-                            ? 'text-left px-2 font-semibold !bg-[#FFE9E0] text-[#8C6C62]'
-                            : 'text-left px-2 text-tertiary font-semibold'
-                  }`}
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </th>
-              ))
+              headerGroup.headers.map((header, index) => {
+                const columnId = header.column.id;
+                const isSelected = selectedColumn === columnId;
+
+                return (
+                  <th
+                    key={header.id}
+                    style={{
+                      width: header.getSize(),
+                      minWidth: header.getSize(),
+                      maxWidth: header.getSize(),
+                      borderTop: '1px solid #F6F6F6',
+                      borderBottom: '1px solid #F6F6F6',
+                    }}
+                    className={`${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] ${
+                      index === 0
+                        ? 'text-center text-lg text-disabledPrimary italic font-normal after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
+                        : index === 6
+                          ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
+                          : index === 7 || index === 8
+                            ? 'text-left px-2 font-semibold !bg-[#EAE3FC] text-[#655C80]'
+                            : index === 9
+                              ? 'text-left px-2 font-semibold !bg-[#FFE9E0] text-[#8C6C62]'
+                              : 'text-left px-2 text-tertiary font-semibold'
+                    } ${isSelected ? 'bg-[#D2E0D4]' : ''}`}
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </th>
+                );
+              })
             )}
           </tr>
         </thead>
         <tbody>
           {visibleRows.map(row => (
             <tr key={row.id}>
-              {row.getVisibleCells().map((cell, index) => (
-                <td
-                  key={cell.id}
-                  style={{
-                    width: cell.column.getSize(),
-                    minWidth: cell.column.getSize(),
-                    maxWidth: cell.column.getSize(),
-                    backgroundColor:
-                      index === row.getVisibleCells().length - 1
-                        ? '#fff'
-                        : undefined,
-                    borderTop: '1px solid #F6F6F6',
-                    borderBottom: '1px solid #F6F6F6',
-                  }}
-                  className={`h-8 border border-[#F6F6F6] ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === row.getVisibleCells().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
-                    index === 0
-                      ? 'text-center text-tertiary after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]'
-                      : 'text-left text-primary p-0'
-                  }`}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
+              {row.getVisibleCells().map((cell, index) => {
+                const columnId = cell.column.id;
+                const isSelected = selectedColumn === columnId;
+
+                return (
+                  <td
+                    key={cell.id}
+                    style={{
+                      width: cell.column.getSize(),
+                      minWidth: cell.column.getSize(),
+                      maxWidth: cell.column.getSize(),
+                      backgroundColor:
+                        index === row.getVisibleCells().length - 1
+                          ? '#fff'
+                          : isSelected
+                            ? '#D2E0D4'
+                            : undefined,
+                      borderTop: '1px solid #F6F6F6',
+                      borderBottom: '1px solid #F6F6F6',
+                    }}
+                    className={`h-8 border border-[#F6F6F6] ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === row.getVisibleCells().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
+                      index === 0
+                        ? 'text-center text-tertiary after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]'
+                        : 'text-left text-primary p-0'
+                    }`}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

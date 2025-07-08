@@ -1,3 +1,18 @@
+// Helper function to create empty data rows
+const createEmptyData = (count: number = 97) => {
+  return Array.from({ length: count }, () => ({
+    job: '',
+    submitted: '',
+    status: '',
+    submitter: '',
+    url: '',
+    assigned: '',
+    priority: '',
+    due: '',
+    value: '',
+  }));
+};
+
 export const importTemplates = [
   {
     id: 'template-1',
@@ -37,6 +52,7 @@ export const importTemplates = [
         due: '10-12-2024',
         value: '4,750,000',
       },
+      ...createEmptyData(97), // Add 97 empty rows to make 100 total
     ],
     extraColumns: [],
   },
@@ -78,6 +94,7 @@ export const importTemplates = [
         due: '15-12-2024',
         value: '7,800,000',
       },
+      ...createEmptyData(97), // Add 97 empty rows to make 100 total
     ],
     extraColumns: [],
   },
@@ -119,6 +136,7 @@ export const importTemplates = [
         due: '30-11-2024',
         value: '2,300,000',
       },
+      ...createEmptyData(97), // Add 97 empty rows to make 100 total
     ],
     extraColumns: [],
   },
