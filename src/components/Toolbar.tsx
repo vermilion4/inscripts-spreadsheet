@@ -7,10 +7,12 @@ import filterIcon from '../assets/filter.svg'
 import sortIcon from '../assets/sort.svg'
 import hideIcon from '../assets/hide.svg'
 import doubleArrow from '../assets/double-carat.svg'
-import { FiCopy, FiCheck, FiExternalLink, FiUsers, FiMail } from 'react-icons/fi'
+import { FiCopy, FiCheck, FiExternalLink, FiUsers, FiMail, FiDownload, FiUpload } from 'react-icons/fi'
 import Tooltip from '../ui/Tooltip'
 import Dropdown from '../ui/Dropdown'
 import Popover from '../ui/Popover'
+import { SheetData } from '../constants/SheetData'
+import { importTemplates } from '../constants/Toolbar'
 
 const ButtonVariants = {
   default: "text-xs sm:text-sm text-primary px-2 py-1 rounded hover:bg-secondary transition whitespace-nowrap",
@@ -43,7 +45,13 @@ const ToolbarButton = ({ icon, label, variant = 'default', className = '', onCli
   </Tooltip>
 )
 
-const Toolbar = () => {
+interface ToolbarProps {
+  activeSheet?: SheetData | null;
+  onImportSheet?: (sheetData: SheetData) => void;
+  onExportSheet?: (sheetData: SheetData) => void;
+}
+
+const Toolbar = ({ activeSheet, onImportSheet, onExportSheet }: ToolbarProps) => {
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
   const [sharePopoverOpen, setSharePopoverOpen] = useState(false)
   const [activeTools, setActiveTools] = useState<Set<string>>(new Set())
@@ -56,12 +64,6 @@ const Toolbar = () => {
     { icon: sortIcon, label: "Sort" },
     { icon: filterIcon, label: "Filter" },
     { icon: cellViewIcon, label: "Cell view" }
-  ]
-
-  // Right tools: no active state, just alert on click
-  const rightTools = [
-    { icon: importIcon, label: "Import", variant: "outlined" as const, onClick: () => alert('Import clicked') },
-    { icon: importIcon, label: "Export", variant: "outlined" as const, className: "[&>img]:rotate-180", onClick: () => alert('Export clicked') }
   ]
 
   const handleToolClick = (toolLabel: string) => {
@@ -98,12 +100,40 @@ const Toolbar = () => {
     }
   }
 
+  const handleImportTemplate = (template: SheetData) => {
+    if (onImportSheet) {
+      onImportSheet(template)
+    }
+  }
+
+  const handleExportSheet = () => {
+    if (activeSheet && onExportSheet) {
+      onExportSheet(activeSheet)
+    }
+  }
+
   const mobileToolsItems = leftTools.map((tool) => ({
     id: tool.label,
     label: tool.label,
     icon: <img src={tool.icon} alt={tool.label} className="w-4 h-4" />,
     onClick: () => handleToolClick(tool.label)
   }))
+
+  const importItems = importTemplates.map((template) => ({
+    id: template.id,
+    label: template.name,
+    icon: <FiUpload className="w-4 h-4" />,
+    onClick: () => handleImportTemplate(template)
+  }))
+
+  const exportItems = [
+    {
+      id: 'export-json',
+      label: 'Export as JSON',
+      icon: <FiDownload className="w-4 h-4" />,
+      onClick: handleExportSheet
+    }
+  ]
 
   const shareLink = "https://sheets.example.com/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
 
@@ -159,17 +189,30 @@ const Toolbar = () => {
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {/* Desktop right tools */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {rightTools.map((tool, index) => (
-              <ToolbarButton 
-                key={index}
-                icon={tool.icon} 
-                label={tool.label}
-                variant={tool.variant}
-                className={tool.className}
-                onClick={tool.onClick}
-                showLabelOnMobile={false}
-              />
-            ))}
+            {/* Import dropdown */}
+            <Dropdown
+              trigger={
+                <button className="flex items-center gap-1 text-xs sm:text-sm text-secondary-two px-3 py-2 hover:bg-secondary transition whitespace-nowrap border border-borderTertiary rounded-md">
+                  <img src={importIcon} alt="Import" className="w-4 h-4" />
+                  <span className="hidden sm:inline">Import</span>
+                </button>
+              }
+              items={importItems}
+              width="w-48"
+              position='left'
+            />
+            {/* Export dropdown */}
+            <Dropdown
+              trigger={
+                <button className="flex items-center gap-1 text-xs sm:text-sm text-secondary-two px-3 py-2 hover:bg-secondary transition whitespace-nowrap border border-borderTertiary rounded-md [&>img]:rotate-180">
+                  <img src={importIcon} alt="Export" className="w-4 h-4" />
+                  <span className="hidden sm:inline">Export</span>
+                </button>
+              }
+              items={exportItems}
+              width="w-40"
+              position='left'
+            />
           </div>
           {/* Share button with popover */}
           <div className="relative">

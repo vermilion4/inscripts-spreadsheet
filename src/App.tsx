@@ -71,11 +71,49 @@ function App() {
     saveSheetsToStorage(updatedSheets);
   };
 
+  const handleImportSheet = (importedSheet: SheetData) => {
+    // Create a new sheet with the imported data
+    const newSheetNumber = sheets.length + 1;
+    const newSheet: SheetData = {
+      ...importedSheet,
+      id: `imported-${Date.now()}`,
+      name: importedSheet.name,
+      title: importedSheet.title
+    };
+    
+    const newSheets = [...sheets, newSheet];
+    setSheets(newSheets);
+    saveSheetsToStorage(newSheets);
+    
+    // Set the new sheet as active
+    setActiveSheet(newSheet);
+    saveActiveSheet(newSheet.id);
+  };
+
+  const handleExportSheet = (sheetToExport: SheetData) => {
+    // Create a JSON blob and download it
+    const jsonData = JSON.stringify(sheetToExport, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${sheetToExport.name.replace(/\s+/g, '_')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="h-screen">
       <div className='sticky top-0 left-0 right-0 z-50'>
       <Header />
-      <Toolbar />
+      <Toolbar 
+        activeSheet={activeSheet}
+        onImportSheet={handleImportSheet}
+        onExportSheet={handleExportSheet}
+      />
       </div>
       {activeSheet && (
         <SpreadsheetTable 
