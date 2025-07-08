@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import SpreadsheetTable from './components/SpreadsheetTable';
 import {
   SheetData,
+  DynamicHeader,
   loadSheetsFromStorage,
   saveSheetsToStorage,
   loadActiveSheet,
@@ -81,6 +82,24 @@ function App() {
     saveSheetsToStorage(updatedSheets);
   };
 
+  const handleDynamicHeadersChange = (dynamicHeaders: DynamicHeader[]) => {
+    if (!activeSheet) return;
+
+    const updatedSheet = {
+      ...activeSheet,
+      dynamicHeaders,
+    };
+
+    setActiveSheet(updatedSheet);
+
+    // Update sheets array and save to localStorage
+    const updatedSheets = sheets.map(sheet =>
+      sheet.id === activeSheet.id ? updatedSheet : sheet
+    );
+    setSheets(updatedSheets);
+    saveSheetsToStorage(updatedSheets);
+  };
+
   const handleImportSheet = (importedSheet: SheetData) => {
     const newSheet: SheetData = {
       ...importedSheet,
@@ -128,6 +147,7 @@ function App() {
           onExportSheet={handleExportSheet}
           hiddenFields={hiddenFields}
           onHiddenFieldsChange={handleHiddenFieldsChange}
+          onDynamicHeadersChange={handleDynamicHeadersChange}
         />
       </div>
       {activeSheet && (

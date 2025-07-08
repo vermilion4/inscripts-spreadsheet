@@ -41,6 +41,7 @@ export default [
         localStorage: true,
         HTMLButtonElement: true,
         HTMLSelectElement: true,
+        JSX: true,
       },
     },
     plugins: {

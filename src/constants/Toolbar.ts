@@ -55,6 +55,26 @@ export const importTemplates = [
       ...createEmptyData(97), // Add 97 empty rows to make 100 total
     ],
     extraColumns: [],
+    dynamicHeaders: [
+      {
+        id: 'abc-header',
+        name: 'ABC',
+        color: '#D2E0D4',
+        columnSpans: [6], // URL column
+      },
+      {
+        id: 'answer-header',
+        name: 'Answer a question',
+        color: '#DCCFFC',
+        columnSpans: [7, 8], // Assigned and Priority columns
+      },
+      {
+        id: 'extract-header',
+        name: 'Extract',
+        color: '#FAC2AF',
+        columnSpans: [9], // Due Date column
+      },
+    ],
   },
   {
     id: 'template-2',
@@ -97,6 +117,20 @@ export const importTemplates = [
       ...createEmptyData(97), // Add 97 empty rows to make 100 total
     ],
     extraColumns: [],
+    dynamicHeaders: [
+      {
+        id: 'review-header',
+        name: 'Review',
+        color: '#E3F2FD',
+        columnSpans: [6, 7], // URL and Assigned columns
+      },
+      {
+        id: 'approve-header',
+        name: 'Approve',
+        color: '#FFF8E1',
+        columnSpans: [8, 9], // Priority and Due Date columns
+      },
+    ],
   },
   {
     id: 'template-3',
@@ -139,5 +173,19 @@ export const importTemplates = [
       ...createEmptyData(97), // Add 97 empty rows to make 100 total
     ],
     extraColumns: [],
+    dynamicHeaders: [
+      {
+        id: 'archive-header',
+        name: 'Archive',
+        color: '#FCE4EC',
+        columnSpans: [6], // URL column
+      },
+      {
+        id: 'export-header',
+        name: 'Export',
+        color: '#E8F5E8',
+        columnSpans: [7, 8, 9], // Assigned, Priority, and Due Date columns
+      },
+    ],
   },
 ];

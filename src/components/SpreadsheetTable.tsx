@@ -6,6 +6,7 @@ import {
   ColumnDef,
   Row,
   ColumnResizeMode,
+  ColumnSizingState,
 } from '@tanstack/react-table';
 import { IoLinkSharp } from 'react-icons/io5';
 import { GrPowerCycle } from 'react-icons/gr';
@@ -28,7 +29,7 @@ import {
   FiDownload,
   FiUpload,
 } from 'react-icons/fi';
-import { SheetData } from '../constants/SheetData';
+import { SheetData, headerColorOptions } from '../constants/SheetData';
 import Dropdown from '../ui/Dropdown';
 
 interface SpreadsheetTableProps {
@@ -464,7 +465,7 @@ export default function SpreadsheetTable({
     { id: string; title: string }[]
   >(sheetData?.extraColumns || []);
   const [copiedTitle, setCopiedTitle] = useState(false);
-  const [columnSizing, setColumnSizing] = useState({});
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [columnResizeMode] = useState<ColumnResizeMode>('onChange');
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevExtraColumnsLength = useRef(0);
@@ -526,236 +527,252 @@ export default function SpreadsheetTable({
     prevExtraColumnsLength.current = extraColumns.length;
   }, [extraColumns.length]);
 
-  const handleCellChange = (row: number, column: string, value: string) => {
-    setData(old => {
-      const newData = [...old];
-      newData[row] = { ...newData[row], [column]: value };
-      // Notify parent component about data changes
-      if (onDataChange) {
-        onDataChange(newData);
-      }
-      return newData;
-    });
-  };
+  const handleCellChange = React.useCallback(
+    (row: number, column: string, value: string) => {
+      setData(old => {
+        const newData = [...old];
+        newData[row] = { ...newData[row], [column]: value };
+        // Notify parent component about data changes
+        if (onDataChange) {
+          onDataChange(newData);
+        }
+        return newData;
+      });
+    },
+    [onDataChange]
+  );
 
-  const handleCellSelect = (row: number, column: string) => {
+  const handleCellSelect = React.useCallback((row: number, column: string) => {
     setSelectedCell({ row, column });
-  };
-
-  const handleColumnSelect = (columnId: string) => {
-    setSelectedColumn(selectedColumn === columnId ? null : columnId);
-  };
-
-  // Optimized column sizing handler
-  const handleColumnSizingChange = React.useCallback((updater: any) => {
-    setColumnSizing(updater);
   }, []);
 
+  const handleColumnSelect = React.useCallback(
+    (columnId: string) => {
+      setSelectedColumn(selectedColumn === columnId ? null : columnId);
+    },
+    [selectedColumn]
+  );
+
+  // Optimized column sizing handler
+  const handleColumnSizingChange = React.useCallback(
+    (
+      updater:
+        | ColumnSizingState
+        | ((old: ColumnSizingState) => ColumnSizingState)
+    ) => {
+      setColumnSizing(updater);
+    },
+    []
+  );
+
   // Build columns array
-  const baseColumns: ColumnDef<RowData>[] = [
-    {
-      id: 'row',
-      header: () => (
-        <div className="flex items-center justify-center">
-          <img src={Pound} alt="pound" className="w-3 h-3" />
-        </div>
-      ),
-      cell: info => info.row.index + 1,
-      size: 32,
-      enableSorting: false,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'job',
-      header: () =>
-        createColumnHeader(
-          <JobIcon className="w-3 h-3" />,
-          'Job Request',
-          handleColumnSelect,
-          'job'
+  const baseColumns = React.useMemo<ColumnDef<RowData>[]>(
+    () => [
+      {
+        id: 'row',
+        header: () => (
+          <div className="flex items-center justify-center">
+            <img src={Pound} alt="pound" className="w-3 h-3" />
+          </div>
         ),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'job',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell
-        ),
-      size: 240,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'submitted',
-      header: () =>
-        createColumnHeader(
-          <SubmittedIcon className="w-3 h-3" />,
-          'Submitted',
-          handleColumnSelect,
-          'submitted'
-        ),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'submitted',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell,
-          { align: 'right' }
-        ),
-      size: 120,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'status',
-      header: () =>
-        createColumnHeader(
-          <StatusIcon className="w-3 h-3" />,
-          'Status',
-          handleColumnSelect,
-          'status'
-        ),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'status',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell,
-          { isStatus: true }
-        ),
-      size: 120,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'submitter',
-      header: () =>
-        createColumnHeader(
-          <SubmitterIcon className="w-3 h-3" />,
-          'Submitter',
-          handleColumnSelect,
-          'submitter'
-        ),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'submitter',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell
-        ),
-      size: 120,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'url',
-      header: () =>
-        createColumnHeader(
-          <URLIcon className="w-3 h-3" />,
-          'URL',
-          handleColumnSelect,
-          'url'
-        ),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'url',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell,
-          { isUrl: true }
-        ),
-      size: 120,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'assigned',
-      header: () =>
-        createSimpleHeader('Assigned', <AssignedIcon className="w-3 h-3" />),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'assigned',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell
-        ),
-      size: 120,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'priority',
-      header: () => createSimpleHeader('Priority'),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'priority',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell,
-          { isPriority: true }
-        ),
-      size: 100,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'due',
-      header: () => createSimpleHeader('Due Date'),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'due',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell,
-          { align: 'right' }
-        ),
-      size: 120,
-      enableResizing: true,
-    },
-    {
-      accessorKey: 'value',
-      header: () => createSimpleHeader('Est. Value'),
-      cell: info =>
-        createEditableCell(
-          {
-            getValue: () => info.getValue() as string,
-            row: { index: info.row.index },
-          },
-          'value',
-          handleCellChange,
-          handleCellSelect,
-          selectedCell,
-          { renderValue: formatLakh, align: 'right' }
-        ),
-      size: 160,
-      enableResizing: true,
-    },
-  ];
+        cell: info => info.row.index + 1,
+        size: 32,
+        enableSorting: false,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'job',
+        header: () =>
+          createColumnHeader(
+            <JobIcon className="w-3 h-3" />,
+            'Job Request',
+            handleColumnSelect,
+            'job'
+          ),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'job',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell
+          ),
+        size: 240,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'submitted',
+        header: () =>
+          createColumnHeader(
+            <SubmittedIcon className="w-3 h-3" />,
+            'Submitted',
+            handleColumnSelect,
+            'submitted'
+          ),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'submitted',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell,
+            { align: 'right' }
+          ),
+        size: 120,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'status',
+        header: () =>
+          createColumnHeader(
+            <StatusIcon className="w-3 h-3" />,
+            'Status',
+            handleColumnSelect,
+            'status'
+          ),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'status',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell,
+            { isStatus: true }
+          ),
+        size: 120,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'submitter',
+        header: () =>
+          createColumnHeader(
+            <SubmitterIcon className="w-3 h-3" />,
+            'Submitter',
+            handleColumnSelect,
+            'submitter'
+          ),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'submitter',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell
+          ),
+        size: 120,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'url',
+        header: () =>
+          createColumnHeader(
+            <URLIcon className="w-3 h-3" />,
+            'URL',
+            handleColumnSelect,
+            'url'
+          ),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'url',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell,
+            { isUrl: true }
+          ),
+        size: 120,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'assigned',
+        header: () =>
+          createSimpleHeader('Assigned', <AssignedIcon className="w-3 h-3" />),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'assigned',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell
+          ),
+        size: 120,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'priority',
+        header: () => createSimpleHeader('Priority'),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'priority',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell,
+            { isPriority: true }
+          ),
+        size: 100,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'due',
+        header: () => createSimpleHeader('Due Date'),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'due',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell,
+            { align: 'right' }
+          ),
+        size: 120,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'value',
+        header: () => createSimpleHeader('Est. Value'),
+        cell: info =>
+          createEditableCell(
+            {
+              getValue: () => info.getValue() as string,
+              row: { index: info.row.index },
+            },
+            'value',
+            handleCellChange,
+            handleCellSelect,
+            selectedCell,
+            { renderValue: formatLakh, align: 'right' }
+          ),
+        size: 160,
+        enableResizing: true,
+      },
+    ],
+    [handleColumnSelect, handleCellChange, handleCellSelect, selectedCell]
+  );
 
   // Insert extra columns before the plus column
   const dynamicExtraColumns: ColumnDef<RowData>[] = extraColumns.map(col => ({
@@ -779,20 +796,19 @@ export default function SpreadsheetTable({
   }));
 
   // Plus column (always last)
-  const plusColumn: ColumnDef<RowData> = {
-    id: 'add-more',
-    header: () => null,
-    cell: () => null,
-    size: 100,
-    enableSorting: false,
-    enableResizing: true,
-  };
-
   // Final columns array: base columns + extra columns + plus column
-  const columns = React.useMemo(
-    () => [...baseColumns, ...dynamicExtraColumns, plusColumn],
-    [baseColumns, dynamicExtraColumns, plusColumn]
-  );
+  const columns = React.useMemo(() => {
+    const plusColumn: ColumnDef<RowData> = {
+      id: 'add-more',
+      header: () => null,
+      cell: () => null,
+      size: 100,
+      enableSorting: false,
+      enableResizing: true,
+    };
+
+    return [...baseColumns, ...dynamicExtraColumns, plusColumn];
+  }, [baseColumns, dynamicExtraColumns]);
 
   const table = useReactTable({
     data,
@@ -806,7 +822,7 @@ export default function SpreadsheetTable({
     enableColumnResizing: true,
     defaultColumn: {
       size: 150,
-      minSize: 50,
+      minSize: 32,
       maxSize: 500,
     },
     debugTable: false,
@@ -819,6 +835,177 @@ export default function SpreadsheetTable({
     .getRowModel()
     .rows.filter((row, idx) => !hiddenFields?.has(idx + 1));
 
+  // Helper function to render dynamic headers
+  const renderDynamicHeaders = () => {
+    const dynamicHeaders = sheetData?.dynamicHeaders || [];
+    const allColumns = [...baseColumns, ...dynamicExtraColumns];
+
+    // Create a map of column IDs to their positions
+    const columnIdToIndex = new Map<string, number>();
+    allColumns.forEach((col, index) => {
+      const columnId = col.id || (col as { accessorKey?: string }).accessorKey;
+      if (columnId) {
+        columnIdToIndex.set(columnId, index);
+      }
+    });
+
+    // Convert column IDs to indices and sort dynamic headers by their first column span
+    const sortedHeaders = [...dynamicHeaders].sort((a, b) => {
+      const aIndices = a.columnSpans
+        .map(id => columnIdToIndex.get(id))
+        .filter(i => i !== undefined) as number[];
+      const bIndices = b.columnSpans
+        .map(id => columnIdToIndex.get(id))
+        .filter(i => i !== undefined) as number[];
+
+      if (aIndices.length === 0 || bIndices.length === 0) return 0;
+
+      const aFirst = Math.min(...aIndices);
+      const bFirst = Math.min(...bIndices);
+      return aFirst - bFirst;
+    });
+
+    const headerCells: JSX.Element[] = [];
+    let currentIndex = 0;
+
+    // Remove the empty cell after the title section
+    // Add the first two static headers
+    headerCells.push(
+      <th
+        key="empty-1"
+        className="bg-white border-none p-0 sticky left-0 z-20"
+        style={{ width: 32, minWidth: 32, maxWidth: 32 }}
+      ></th>
+    );
+    headerCells.push(
+      <th
+        key="title-section"
+        colSpan={4}
+        className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none"
+      >
+        <div className="flex items-center gap-3 h-6">
+          <button
+            onClick={handleCopyTitle}
+            className={`text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal transition-colors hover:bg-gray-200 cursor-pointer ${
+              copiedTitle ? 'bg-green-100 text-green-700' : ''
+            }`}
+            title={copiedTitle ? 'Copied!' : 'Click to copy sheet title'}
+          >
+            <IoLinkSharp
+              size={16}
+              color={copiedTitle ? '#059669' : '#1A8CFF'}
+            />
+            {sheetData?.title || 'Q3 Financial Overview'}
+            {copiedTitle && <span className="ml-1 text-xs">✓</span>}
+          </button>
+          <GrPowerCycle className="animate-spin" color="#FA6736" size={16} />
+        </div>
+      </th>
+    );
+
+    currentIndex = 5;
+
+    // Track which columns have been covered by dynamic headers
+    const coveredColumns = new Set<number>();
+
+    // Render dynamic headers
+    sortedHeaders.forEach(header => {
+      const columnIndices = header.columnSpans
+        .map(id => columnIdToIndex.get(id))
+        .filter(i => i !== undefined) as number[];
+
+      if (columnIndices.length === 0) return;
+
+      // Sort the column indices to ensure proper ordering
+      columnIndices.sort((a, b) => a - b);
+
+      const minSpan = Math.min(...columnIndices);
+      const maxSpan = Math.max(...columnIndices);
+      const spanCount = maxSpan - minSpan + 1;
+      // Add empty cells for columns before this header that aren't covered
+      while (currentIndex < minSpan) {
+        if (!coveredColumns.has(currentIndex)) {
+          headerCells.push(
+            <th
+              key={`empty-${currentIndex}`}
+              className="p-0"
+              style={{ width: 124, minWidth: 124, maxWidth: 124 }}
+            ></th>
+          );
+        }
+        currentIndex++;
+      }
+
+      // Add the dynamic header
+      headerCells.push(
+        <th
+          key={header.id}
+          colSpan={spanCount}
+          className="font-medium text-sm h-8 px-4 text-center border-none"
+          style={{
+            backgroundColor: header.color,
+            color:
+              headerColorOptions.find(option => option.value === header.color)
+                ?.textColor || '#000',
+            minWidth: spanCount * 124,
+            maxWidth: spanCount * 124,
+          }}
+        >
+          <Dropdown
+            trigger={
+              <span className="flex items-center justify-center gap-2 whitespace-nowrap">
+                <ActionIcon className="w-3.5 h-3.5" />
+                {header.name}
+                <img src={Ellipsis} alt="ellipsis" />
+              </span>
+            }
+            items={createDropdownItems(header.id)}
+            width="100px"
+          />
+        </th>
+      );
+
+      // Mark all spanned columns as covered
+      for (let i = minSpan; i <= maxSpan; i++) {
+        coveredColumns.add(i);
+      }
+
+      currentIndex = maxSpan + 1;
+    });
+
+    // Add empty cells for remaining columns that aren't covered
+    while (currentIndex < allColumns.length) {
+      if (!coveredColumns.has(currentIndex)) {
+        headerCells.push(
+          <th
+            key={`empty-${currentIndex}`}
+            className="p-0"
+            style={{ width: 124, minWidth: 124, maxWidth: 124 }}
+          ></th>
+        );
+      }
+      currentIndex++;
+    }
+
+    // Add the plus column header
+    headerCells.push(
+      <th
+        key="plus-column"
+        className="bg-borderTertiary p-0 border-dotted-custom sticky right-0 z-20"
+        style={{ width: 100, minWidth: 100, maxWidth: 100 }}
+      >
+        <button
+          onClick={handleAddColumn}
+          className="w-full h-full flex items-center justify-center focus:outline-none"
+        >
+          <FiPlus size={20} color="#04071E" />
+        </button>
+      </th>
+    );
+
+    return headerCells;
+  };
+
   return (
     <div
       className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mr-4 bg-white"
@@ -830,117 +1017,40 @@ export default function SpreadsheetTable({
       <table className="w-full relative" style={{ borderCollapse: 'collapse' }}>
         <thead>
           {/* Custom top header row */}
-          <tr>
-            <th
-              className="bg-white border-none p-0 sticky left-0 z-20"
-              style={{ width: 32, minWidth: 32, maxWidth: 32 }}
-            ></th>
-            <th
-              colSpan={4}
-              className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none"
-            >
-              <div className="flex items-center gap-3 h-6">
-                <button
-                  onClick={handleCopyTitle}
-                  className={`text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal transition-colors hover:bg-gray-200 cursor-pointer ${
-                    copiedTitle ? 'bg-green-100 text-green-700' : ''
-                  }`}
-                  title={copiedTitle ? 'Copied!' : 'Click to copy sheet title'}
-                >
-                  <IoLinkSharp
-                    size={16}
-                    color={copiedTitle ? '#059669' : '#1A8CFF'}
-                  />
-                  {sheetData?.title || 'Q3 Financial Overview'}
-                  {copiedTitle && <span className="ml-1 text-xs">✓</span>}
-                </button>
-                <GrPowerCycle
-                  className="animate-spin"
-                  color="#FA6736"
-                  size={16}
-                />
-              </div>
-            </th>
-            <th
-              className="bg-transparent border-none p-0"
-              style={{ width: 180, minWidth: 180, maxWidth: 180 }}
-            ></th>
-            <th
-              className="bg-[#D2E0D4] text-[#505450] font-medium text-sm h-8 px-4 text-center border-none"
-              style={{ minWidth: 120, maxWidth: 120 }}
-            >
-              <Dropdown
-                trigger={
-                  <span className="flex items-center justify-center gap-2 whitespace-nowrap">
-                    <ActionIcon className="w-3.5 h-3.5 custom-fill" />
-                    ABC
-                    <img src={Ellipsis} alt="ellipsis" />
-                  </span>
-                }
-                items={createDropdownItems('abc')}
-                width="100px"
-              />
-            </th>
-            <th
-              colSpan={2}
-              className="bg-[#DCCFFC] text-textDark font-medium text-sm h-8 px-4 text-center border-none"
-              style={{ minWidth: 220, maxWidth: 220 }}
-            >
-              <Dropdown
-                trigger={
-                  <span className="flex items-center justify-center whitespace-nowrap gap-2">
-                    <ActionIcon className="w-3.5 h-3.5" />
-                    Answer a question
-                    <img src={Ellipsis} alt="ellipsis" />
-                  </span>
-                }
-                items={createDropdownItems('answer')}
-                width="100px"
-              />
-            </th>
-            <th
-              className="bg-[#FAC2AF] text-[#695149] font-medium text-sm h-8 px-4 text-center border-none"
-              style={{ minWidth: 160, maxWidth: 160 }}
-            >
-              <Dropdown
-                trigger={
-                  <span className="flex items-center justify-center gap-2 whitespace-nowrap">
-                    <ActionIcon className="w-3.5 h-3.5" />
-                    Extract
-                    <img src={Ellipsis} alt="ellipsis" />
-                  </span>
-                }
-                items={createDropdownItems('extract')}
-                width="100px"
-              />
-            </th>
-            {/* Render blank th for each extra column */}
-            {extraColumns.map(col => (
-              <th
-                key={col.id}
-                className=" p-0"
-                style={{ width: 124, minWidth: 124, maxWidth: 124 }}
-              ></th>
-            ))}
-            {/* Plus column header with plus icon, sticky right */}
-            <th
-              className="bg-borderTertiary p-0 border-dotted-custom sticky right-0 z-20"
-              style={{ width: 100, minWidth: 100, maxWidth: 100 }}
-            >
-              <button
-                onClick={handleAddColumn}
-                className="w-full h-full flex items-center justify-center focus:outline-none"
-              >
-                <FiPlus size={20} color="#04071E" />
-              </button>
-            </th>
-          </tr>
+          <tr>{renderDynamicHeaders()}</tr>
           {/* Existing column headers */}
           <tr>
             {table.getHeaderGroups().map(headerGroup =>
               headerGroup.headers.map((header, index) => {
                 const columnId = header.column.id;
                 const isSelected = selectedColumn === columnId;
+
+                // Determine if this column is part of a dynamic header
+                const dynamicHeaders = sheetData?.dynamicHeaders || [];
+                let headerColor = '';
+                let textColor = '';
+
+                for (const dynamicHeader of dynamicHeaders) {
+                  // Check if this column's ID is in the dynamic header's columnSpans
+                  const columnId =
+                    header.column.id ||
+                    (header.column.columnDef as { accessorKey?: string })
+                      .accessorKey;
+                  if (
+                    columnId &&
+                    dynamicHeader.columnSpans.includes(columnId)
+                  ) {
+                    // Map to lighter variants for column headers using constants
+                    const colorOption = headerColorOptions.find(
+                      option => option.value === dynamicHeader.color
+                    );
+                    if (colorOption) {
+                      headerColor = colorOption.lightVariant;
+                      textColor = colorOption.lightTextColor;
+                    }
+                    break;
+                  }
+                }
 
                 return (
                   <th
@@ -951,17 +1061,15 @@ export default function SpreadsheetTable({
                       maxWidth: header.getSize(),
                       borderTop: '1px solid #F6F6F6',
                       borderBottom: '1px solid #F6F6F6',
+                      backgroundColor: headerColor || '#EEE',
+                      color: textColor || undefined,
                     }}
-                    className={`${index === 0 ? 'sticky left-0 z-10' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] bg-borderTertiary relative ${
+                    className={`${index === 0 ? 'sticky left-0 z-10' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white ' : ''} h-8 text-xs border border-[#F6F6F6] relative ${
                       index === 0
                         ? 'after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
-                        : index === 6
-                          ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
-                          : index === 7 || index === 8
-                            ? 'text-left px-2 font-semibold !bg-[#EAE3FC] text-[#655C80]'
-                            : index === 9
-                              ? 'text-left px-2 font-semibold !bg-[#FFE9E0] text-[#8C6C62]'
-                              : 'text-left px-2 text-tertiary font-semibold'
+                        : headerColor
+                          ? 'text-left px-2 font-semibold'
+                          : 'text-left px-2 text-tertiary font-semibold'
                     } ${isSelected ? 'bg-[#D2E0D4]' : ''}`}
                   >
                     {flexRender(

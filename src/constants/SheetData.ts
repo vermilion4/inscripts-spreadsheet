@@ -1,3 +1,10 @@
+export interface DynamicHeader {
+  id: string;
+  name: string;
+  color: string;
+  columnSpans: string[]; // Array of column indices to span
+}
+
 export interface SheetData {
   id: string;
   name: string;
@@ -15,7 +22,54 @@ export interface SheetData {
     [key: string]: string;
   }>;
   extraColumns?: { id: string; title: string }[];
+  dynamicHeaders?: DynamicHeader[];
 }
+
+// Color options for dynamic headers
+export const headerColorOptions = [
+  {
+    name: 'Green',
+    value: '#D2E0D4',
+    textColor: '#505450',
+    lightVariant: '#E8F0E9',
+    lightTextColor: '#666C66',
+  },
+  {
+    name: 'Purple',
+    value: '#DCCFFC',
+    textColor: '#463E59',
+    lightVariant: '#EAE3FC',
+    lightTextColor: '#655C80',
+  },
+  {
+    name: 'Orange',
+    value: '#FAC2AF',
+    textColor: '#695149',
+    lightVariant: '#FFE9E0',
+    lightTextColor: '#8C6C62',
+  },
+  {
+    name: 'Blue',
+    value: '#B8D4F0',
+    textColor: '#3A4D63',
+    lightVariant: '#D9E7F5',
+    lightTextColor: '#5A6B7F',
+  },
+  {
+    name: 'Yellow',
+    value: '#F5E6A3',
+    textColor: '#6B5D2F',
+    lightVariant: '#F9F0C9',
+    lightTextColor: '#8A7A4D',
+  },
+  {
+    name: 'Pink',
+    value: '#F2C2D4',
+    textColor: '#6B4553',
+    lightVariant: '#F7D9E2',
+    lightTextColor: '#8A6B75',
+  },
+];
 
 // Dummy data for different sheets
 const q3FinancialData = [
@@ -216,13 +270,15 @@ const createSheetData = (
     value: string;
   }>,
   emptyRows: number = 95,
-  extraColumns: { id: string; title: string }[] = []
+  extraColumns: { id: string; title: string }[] = [],
+  dynamicHeaders: DynamicHeader[] = []
 ): SheetData => ({
   id,
   name,
   title,
   data: [...data, ...createEmptyData(emptyRows)],
   extraColumns,
+  dynamicHeaders,
 });
 
 export const sheetData: SheetData[] = [
@@ -230,7 +286,29 @@ export const sheetData: SheetData[] = [
     'all-orders',
     'All Orders',
     'Q3 Financial Overview',
-    q3FinancialData
+    q3FinancialData,
+    95,
+    [],
+    [
+      {
+        id: 'abc-header',
+        name: 'ABC',
+        color: '#D2E0D4',
+        columnSpans: ['assigned'], // Assigned column only
+      },
+      {
+        id: 'answer-header',
+        name: 'Answer a question',
+        color: '#DCCFFC',
+        columnSpans: ['priority', 'due'], // Priority and Due Date columns
+      },
+      {
+        id: 'extract-header',
+        name: 'Extract',
+        color: '#FAC2AF',
+        columnSpans: ['value'], // Est. Value column
+      },
+    ]
   ),
   createSheetData(
     'pending',
