@@ -4,30 +4,34 @@ import {
   getCoreRowModel,
   flexRender,
   ColumnDef,
+  Row,
 } from '@tanstack/react-table';
-import { IoLinkSharp } from "react-icons/io5";
-import { GrPowerCycle } from "react-icons/gr";
-import {ReactComponent as AssignedIcon} from '../assets/assigned.svg';
-import {ReactComponent as SubmittedIcon} from '../assets/calendar.svg';
-import {ReactComponent as StatusIcon} from '../assets/status.svg';
-import {ReactComponent as SubmitterIcon} from '../assets/user.svg';
-import {ReactComponent as URLIcon} from '../assets/globe.svg';
-import {ReactComponent as JobIcon} from '../assets/job.svg';
-import {ReactComponent as ActionIcon} from '../assets/action.svg'
+import { IoLinkSharp } from 'react-icons/io5';
+import { GrPowerCycle } from 'react-icons/gr';
+import { ReactComponent as AssignedIcon } from '../assets/assigned.svg';
+import { ReactComponent as SubmittedIcon } from '../assets/calendar.svg';
+import { ReactComponent as StatusIcon } from '../assets/status.svg';
+import { ReactComponent as SubmitterIcon } from '../assets/user.svg';
+import { ReactComponent as URLIcon } from '../assets/globe.svg';
+import { ReactComponent as JobIcon } from '../assets/job.svg';
+import { ReactComponent as ActionIcon } from '../assets/action.svg';
 
 import CaratDown from '../assets/carat-down.svg';
-import Ellipsis from '../assets/ellipsis.svg'
+import Ellipsis from '../assets/ellipsis.svg';
 import { FiPlus } from 'react-icons/fi';
 import { SheetData } from '../constants/SheetData';
 
 interface SpreadsheetTableProps {
   sheetData?: SheetData;
-  onDataChange?: (data: any[]) => void;
-  onExtraColumnsChange?: (extraColumns: {id: string, title: string}[]) => void;
+  // eslint-disable-next-line no-unused-vars
+  onDataChange?: (data: RowData[]) => void;
+  onExtraColumnsChange?: (
+    // eslint-disable-next-line no-unused-vars
+    extraColumns: { id: string; title: string }[]
+  ) => void;
 }
 
-// Default empty data structure for new sheets
-const defaultData: Array<{
+interface RowData {
   job: string;
   submitted: string;
   status: string;
@@ -37,8 +41,11 @@ const defaultData: Array<{
   priority: string;
   due: string;
   value: string;
-  [key: string]: any; // allow extra columns
-}> = Array.from({ length: 100 }, () => ({
+  [key: string]: string; // allow extra columns
+}
+
+// Default empty data structure for new sheets
+const defaultData: RowData[] = Array.from({ length: 100 }, () => ({
   job: '',
   submitted: '',
   status: '',
@@ -53,14 +60,14 @@ const defaultData: Array<{
 const statusColors: Record<string, string> = {
   'In-process': 'bg-[#FFF3D6] text-[#85640B]',
   'Need to start': 'bg-[#E2E8F0] text-[#475569]',
-  'Complete': 'bg-[#D3F2E3] text-[#0A6E3D]',
-  'Blocked': 'bg-[#FFE1DE] text-[#C22219]',
+  Complete: 'bg-[#D3F2E3] text-[#0A6E3D]',
+  Blocked: 'bg-[#FFE1DE] text-[#C22219]',
 };
 
 const priorityColors: Record<string, string> = {
-  'High': 'text-[#EF4D44]',
-  'Medium': 'text-[#C29210]',
-  'Low': 'text-[#1A8CFF]',
+  High: 'text-[#EF4D44]',
+  Medium: 'text-[#C29210]',
+  Low: 'text-[#1A8CFF]',
 };
 
 // Helper to format value as lakh
@@ -76,6 +83,22 @@ function formatLakh(value: string) {
   );
 }
 
+interface EditableCellProps {
+  value: string;
+  rowIndex: number;
+  columnId: string;
+  // eslint-disable-next-line no-unused-vars
+  onChange: (row: number, column: string, value: string) => void;
+  isUrl?: boolean;
+  isStatus?: boolean;
+  isPriority?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  // eslint-disable-next-line no-unused-vars
+  renderValue?: (value: string) => React.ReactNode;
+  align?: 'left' | 'right' | 'center';
+}
+
 function EditableCell({
   value,
   rowIndex,
@@ -88,22 +111,11 @@ function EditableCell({
   onSelect,
   renderValue,
   align,
-}: {
-  value: string;
-  rowIndex: number;
-  columnId: string;
-  onChange: (row: number, column: string, value: string) => void;
-  isUrl?: boolean;
-  isStatus?: boolean;
-  isPriority?: boolean;
-  isSelected?: boolean;
-  onSelect?: () => void;
-  renderValue?: (value: string) => React.ReactNode;
-  align?: 'left' | 'right' | 'center';
-}) {
+}: EditableCellProps) {
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -137,7 +149,13 @@ function EditableCell({
     } else if (e.key === 'Escape') {
       setEditing(false);
       setInputValue(value || '');
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !isStatus && !isPriority) {
+    } else if (
+      e.key.length === 1 &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !isStatus &&
+      !isPriority
+    ) {
       // Start typing - replace content (only for non-dropdown fields)
       setInputValue(e.key);
       setEditing(true);
@@ -153,20 +171,23 @@ function EditableCell({
 
   // Auto-focus input when editing starts
   useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus();
-      // Only call select() on input elements, not select elements
-      if (inputRef.current instanceof HTMLInputElement) {
+    if (editing) {
+      if (isStatus || isPriority) {
+        if (selectRef.current) {
+          selectRef.current.focus();
+        }
+      } else if (inputRef.current) {
+        inputRef.current.focus();
         inputRef.current.select();
       }
     }
-  }, [editing]);
+  }, [editing, isStatus, isPriority]);
 
   if (editing) {
     if (isStatus) {
       return (
         <select
-          ref={inputRef as any}
+          ref={selectRef}
           className={`px-2 py-1 rounded-full text-xs font-medium mx-auto outline-none border border-borderTertiary w-[90%] flex ${statusColors[inputValue] || ''}`}
           value={inputValue}
           onChange={e => {
@@ -193,7 +214,7 @@ function EditableCell({
     if (isPriority) {
       return (
         <select
-          ref={inputRef as any}
+          ref={selectRef}
           className={`font-semibold w-[90%] border-0 outline-none bg-transparent mx-auto flex ${priorityColors[inputValue] || ''}`}
           value={inputValue}
           onChange={e => {
@@ -240,7 +261,9 @@ function EditableCell({
   const cellContent = () => {
     if (isStatus && value) {
       return (
-        <span className={`px-2 py-1 h-6 rounded-full text-xs font-medium flex items-center justify-center w-fit mx-auto ${statusColors[value] || ''}`}>
+        <span
+          className={`px-2 py-1 h-6 rounded-full text-xs font-medium flex items-center justify-center w-fit mx-auto ${statusColors[value] || ''}`}
+        >
           {value}
         </span>
       );
@@ -248,7 +271,9 @@ function EditableCell({
 
     if (isPriority && value) {
       return (
-        <span className={`font-semibold flex justify-center ${priorityColors[value] || ''}`}>
+        <span
+          className={`font-semibold flex justify-center ${priorityColors[value] || ''}`}
+        >
           {value}
         </span>
       );
@@ -284,17 +309,30 @@ function EditableCell({
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <span className={`block w-full truncate ${align === 'right' ? 'text-right' : ''}`}>
+      <span
+        className={`block w-full truncate ${align === 'right' ? 'text-right' : ''}`}
+      >
         {cellContent()}
       </span>
     </div>
   );
 }
 
-export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColumnsChange }: SpreadsheetTableProps) {
-  const [data, setData] = useState(() => sheetData?.data || [...defaultData]);
-  const [selectedCell, setSelectedCell] = useState<{row: number, column: string} | null>(null);
-  const [extraColumns, setExtraColumns] = useState<{id: string, title: string}[]>(sheetData?.extraColumns || []);
+export default function SpreadsheetTable({
+  sheetData,
+  onDataChange,
+  onExtraColumnsChange,
+}: SpreadsheetTableProps) {
+  const [data, setData] = useState<RowData[]>(
+    () => sheetData?.data || [...defaultData]
+  );
+  const [selectedCell, setSelectedCell] = useState<{
+    row: number;
+    column: string;
+  } | null>(null);
+  const [extraColumns, setExtraColumns] = useState<
+    { id: string; title: string }[]
+  >(sheetData?.extraColumns || []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevExtraColumnsLength = useRef(0);
 
@@ -314,10 +352,13 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
   const handleAddColumn = () => {
     const nextIndex = extraColumns.length + 1;
     const newId = `extra_${nextIndex}`;
-    const newExtraColumns = [...extraColumns, { id: newId, title: `Title ${nextIndex + 5}` }];
+    const newExtraColumns = [
+      ...extraColumns,
+      { id: newId, title: `Title ${nextIndex + 5}` },
+    ];
     setExtraColumns(newExtraColumns);
-    setData(old => old.map(row => ({ ...row, [newId]: row[newId] || '' })));
-    
+    setData(old => old.map(row => ({ ...row, [newId]: '' })));
+
     // Notify parent component about extra columns change
     if (onExtraColumnsChange) {
       onExtraColumnsChange(newExtraColumns);
@@ -329,7 +370,10 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
     if (extraColumns.length > prevExtraColumnsLength.current) {
       // Scroll to the far right
       if (scrollRef.current) {
-        scrollRef.current.scrollTo({ left: scrollRef.current.scrollWidth, behavior: 'smooth' });
+        scrollRef.current.scrollTo({
+          left: scrollRef.current.scrollWidth,
+          behavior: 'smooth',
+        });
       }
     }
     prevExtraColumnsLength.current = extraColumns.length;
@@ -348,11 +392,11 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
   };
 
   const handleCellSelect = (row: number, column: string) => {
-    setSelectedCell({row, column});
+    setSelectedCell({ row, column });
   };
 
   // Build columns array
-  const baseColumns: ColumnDef<any, any>[] = [
+  const baseColumns: ColumnDef<RowData>[] = [
     {
       id: 'row',
       header: '#',
@@ -373,11 +417,14 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
       ),
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="job"
           onChange={handleCellChange}
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'job'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'job'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'job')}
         />
       ),
@@ -396,11 +443,14 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
       ),
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="submitted"
           onChange={handleCellChange}
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'submitted'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'submitted'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'submitted')}
           align="right"
         />
@@ -420,12 +470,15 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
       ),
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="status"
           onChange={handleCellChange}
           isStatus
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'status'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'status'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'status')}
         />
       ),
@@ -444,11 +497,14 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
       ),
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="submitter"
           onChange={handleCellChange}
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'submitter'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'submitter'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'submitter')}
         />
       ),
@@ -467,12 +523,15 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
       ),
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="url"
           onChange={handleCellChange}
           isUrl
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'url'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'url'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'url')}
         />
       ),
@@ -488,11 +547,14 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
       ),
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="assigned"
           onChange={handleCellChange}
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'assigned'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'assigned'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'assigned')}
         />
       ),
@@ -500,19 +562,18 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
     },
     {
       accessorKey: 'priority',
-      header: () => (
-        <span className="flex items-center gap-1">
-          Priority
-        </span>
-      ),
+      header: () => <span className="flex items-center gap-1">Priority</span>,
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="priority"
           onChange={handleCellChange}
           isPriority
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'priority'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'priority'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'priority')}
         />
       ),
@@ -520,18 +581,17 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
     },
     {
       accessorKey: 'due',
-      header: () => (
-        <span className="flex items-center gap-1">
-          Due Date
-        </span>
-      ),
+      header: () => <span className="flex items-center gap-1">Due Date</span>,
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="due"
           onChange={handleCellChange}
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'due'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'due'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'due')}
           align="right"
         />
@@ -540,18 +600,17 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
     },
     {
       accessorKey: 'value',
-      header: () => (
-        <span className="flex items-center gap-1">
-          Est. Value
-        </span>
-      ),
+      header: () => <span className="flex items-center gap-1">Est. Value</span>,
       cell: info => (
         <EditableCell
-          value={info.getValue() || ''}
+          value={(info.getValue() as string) || ''}
           rowIndex={info.row.index}
           columnId="value"
           onChange={handleCellChange}
-          isSelected={selectedCell?.row === info.row.index && selectedCell?.column === 'value'}
+          isSelected={
+            selectedCell?.row === info.row.index &&
+            selectedCell?.column === 'value'
+          }
           onSelect={() => handleCellSelect(info.row.index, 'value')}
           renderValue={formatLakh}
           align="right"
@@ -562,16 +621,19 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
   ];
 
   // Insert extra columns before the plus column
-  const dynamicExtraColumns = extraColumns.map((col, idx) => ({
+  const dynamicExtraColumns: ColumnDef<RowData>[] = extraColumns.map(col => ({
     id: col.id,
     header: () => col.title,
-    cell: (info: any) => (
+    cell: (info: { row: Row<RowData> }) => (
       <EditableCell
         value={info.row.original[col.id] || ''}
         rowIndex={info.row.index}
         columnId={col.id}
         onChange={handleCellChange}
-        isSelected={selectedCell?.row === info.row.index && selectedCell?.column === col.id}
+        isSelected={
+          selectedCell?.row === info.row.index &&
+          selectedCell?.column === col.id
+        }
         onSelect={() => handleCellSelect(info.row.index, col.id)}
       />
     ),
@@ -579,7 +641,7 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
   }));
 
   // Plus column (always last)
-  const plusColumn = {
+  const plusColumn: ColumnDef<RowData> = {
     id: 'add-more',
     header: () => null,
     cell: () => null,
@@ -606,45 +668,79 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
         <thead>
           {/* Custom top header row */}
           <tr>
-            <th className="bg-white border-none p-0 sticky left-0 z-20" style={{ width: 32, minWidth: 32, maxWidth: 32 }}></th>
-            <th colSpan={4} className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none">
+            <th
+              className="bg-white border-none p-0 sticky left-0 z-20"
+              style={{ width: 32, minWidth: 32, maxWidth: 32 }}
+            ></th>
+            <th
+              colSpan={4}
+              className="bg-borderSecondary text-[#3B3B3B] font-medium text-sm h-8 px-2 text-left border-none"
+            >
               <div className="flex items-center gap-3 h-6">
                 <span className="text-secondary-two text-xs bg-borderTertiary rounded-[4px] px-2 p-1 flex items-center gap-1 font-normal">
-                  <IoLinkSharp size={16} color='#1A8CFF' />
-                  {sheetData?.title || 'Q3 Financial Overview'}</span>
-                  <GrPowerCycle className='animate-spin' color='#FA6736' size={16} />
+                  <IoLinkSharp size={16} color="#1A8CFF" />
+                  {sheetData?.title || 'Q3 Financial Overview'}
+                </span>
+                <GrPowerCycle
+                  className="animate-spin"
+                  color="#FA6736"
+                  size={16}
+                />
               </div>
             </th>
-            <th className="bg-transparent border-none p-0" style={{ width: 180, minWidth: 180, maxWidth: 180 }}></th>
-            <th className="bg-[#D2E0D4] text-[#505450] font-medium text-sm h-8 px-4 text-center border-none" style={{ minWidth: 120, maxWidth: 120 }}>
+            <th
+              className="bg-transparent border-none p-0"
+              style={{ width: 180, minWidth: 180, maxWidth: 180 }}
+            ></th>
+            <th
+              className="bg-[#D2E0D4] text-[#505450] font-medium text-sm h-8 px-4 text-center border-none"
+              style={{ minWidth: 120, maxWidth: 120 }}
+            >
               <span className="flex items-center justify-center gap-2 whitespace-nowrap">
-                <ActionIcon className='w-3.5 h-3.5 custom-fill' />
+                <ActionIcon className="w-3.5 h-3.5 custom-fill" />
                 ABC
                 <img src={Ellipsis} alt="ellipsis" />
-                </span>
+              </span>
             </th>
-            <th colSpan={2} className="bg-[#DCCFFC] text-textDark font-medium text-sm h-8 px-4 text-center border-none" style={{ minWidth: 220, maxWidth: 220 }}>
+            <th
+              colSpan={2}
+              className="bg-[#DCCFFC] text-textDark font-medium text-sm h-8 px-4 text-center border-none"
+              style={{ minWidth: 220, maxWidth: 220 }}
+            >
               <span className="flex items-center justify-center whitespace-nowrap gap-2">
-                <ActionIcon className='w-3.5 h-3.5' />
+                <ActionIcon className="w-3.5 h-3.5" />
                 Answer a question
                 <img src={Ellipsis} alt="ellipsis" />
-                </span>
+              </span>
             </th>
-            <th className="bg-[#FAC2AF] text-[#695149] font-medium text-sm h-8 px-4 text-center border-none" style={{ minWidth: 160, maxWidth: 160 }}>
+            <th
+              className="bg-[#FAC2AF] text-[#695149] font-medium text-sm h-8 px-4 text-center border-none"
+              style={{ minWidth: 160, maxWidth: 160 }}
+            >
               <span className="flex items-center justify-center gap-2 whitespace-nowrap">
-                <ActionIcon className='w-3.5 h-3.5' />
+                <ActionIcon className="w-3.5 h-3.5" />
                 Extract
                 <img src={Ellipsis} alt="ellipsis" />
-                </span>
+              </span>
             </th>
             {/* Render blank th for each extra column */}
-            {extraColumns.map((col, idx) => (
-              <th key={col.id} className=" p-0" style={{ width: 124, minWidth: 124, maxWidth: 124 }}></th>
+            {extraColumns.map(col => (
+              <th
+                key={col.id}
+                className=" p-0"
+                style={{ width: 124, minWidth: 124, maxWidth: 124 }}
+              ></th>
             ))}
             {/* Plus column header with plus icon, sticky right */}
-            <th className="bg-borderTertiary p-0 border-dotted-custom sticky right-0 z-20" style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-              <button onClick={handleAddColumn} className="w-full h-full flex items-center justify-center focus:outline-none">
-                <FiPlus size={20} color='#04071E' />
+            <th
+              className="bg-borderTertiary p-0 border-dotted-custom sticky right-0 z-20"
+              style={{ width: 100, minWidth: 100, maxWidth: 100 }}
+            >
+              <button
+                onClick={handleAddColumn}
+                className="w-full h-full flex items-center justify-center focus:outline-none"
+              >
+                <FiPlus size={20} color="#04071E" />
               </button>
             </th>
           </tr>
@@ -665,15 +761,18 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
                     index === 0
                       ? 'text-center text-lg text-disabledPrimary italic font-normal after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6]'
                       : index === 6
-                      ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
-                      : (index === 7 || index === 8)
-                      ? 'text-left px-2 font-semibold !bg-[#EAE3FC] text-[#655C80]'
-                      : index === 9
-                      ? 'text-left px-2 font-semibold !bg-[#FFE9E0] text-[#8C6C62]'
-                      : 'text-left px-2 text-tertiary font-semibold'
+                        ? 'text-left px-2 font-semibold !bg-[#E8F0E9] text-[#666C66]'
+                        : index === 7 || index === 8
+                          ? 'text-left px-2 font-semibold !bg-[#EAE3FC] text-[#655C80]'
+                          : index === 9
+                            ? 'text-left px-2 font-semibold !bg-[#FFE9E0] text-[#8C6C62]'
+                            : 'text-left px-2 text-tertiary font-semibold'
                   }`}
                 >
-                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
                 </th>
               ))
             )}
@@ -689,15 +788,22 @@ export default function SpreadsheetTable({ sheetData, onDataChange, onExtraColum
                     width: column.getSize(),
                     minWidth: column.getSize(),
                     maxWidth: column.getSize(),
-                    backgroundColor: index === table.getAllColumns().length - 1 ? '#fff' : undefined,
+                    backgroundColor:
+                      index === table.getAllColumns().length - 1
+                        ? '#fff'
+                        : undefined,
                     borderTop: '1px solid #F6F6F6',
                     borderBottom: '1px solid #F6F6F6',
                   }}
                   className={`h-8 border border-[#F6F6F6] ${index === 0 ? 'sticky left-0 z-10 bg-white' : ''} ${index === table.getAllColumns().length - 1 ? 'border-dotted-custom sticky right-0 z-10 bg-white border' : ''} text-xs align-middle hover:bg-[#E8F0E9] focus-within:bg-[#E8F0E9] ${
-                    index === 0 ? 'text-center text-tertiary after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]' : 'text-left text-primary p-0'
+                    index === 0
+                      ? 'text-center text-tertiary after:absolute after:top-0 after:right-[-1px] after:bottom-0 after:w-[1px] after:bg-[#F6F6F6] after:border-b after:border-[#F6F6F6]'
+                      : 'text-left text-primary p-0'
                   }`}
                 >
-                  {flexRender(column.columnDef.cell, { ...row.getVisibleCells()[index]?.getContext?.() })}
+                  {flexRender(column.columnDef.cell, {
+                    ...row.getVisibleCells()[index]?.getContext?.(),
+                  })}
                 </td>
               ))}
             </tr>

@@ -12,9 +12,9 @@ export interface SheetData {
     priority: string;
     due: string;
     value: string;
-    [key: string]: any;
+    [key: string]: string;
   }>;
-  extraColumns?: {id: string, title: string}[];
+  extraColumns?: { id: string; title: string }[];
 }
 
 // Dummy data for different sheets
@@ -204,9 +204,19 @@ const createSheetData = (
   id: string,
   name: string,
   title: string,
-  data: Array<any>,
+  data: Array<{
+    job: string;
+    submitted: string;
+    status: string;
+    submitter: string;
+    url: string;
+    assigned: string;
+    priority: string;
+    due: string;
+    value: string;
+  }>,
   emptyRows: number = 95,
-  extraColumns: {id: string, title: string}[] = []
+  extraColumns: { id: string; title: string }[] = []
 ): SheetData => ({
   id,
   name,
@@ -216,9 +226,24 @@ const createSheetData = (
 });
 
 export const sheetData: SheetData[] = [
-  createSheetData('all-orders', 'All Orders', 'Q3 Financial Overview', q3FinancialData),
-  createSheetData('pending', 'Pending', 'Pending Review Dashboard', pendingData),
-  createSheetData('reviewed', 'Reviewed', 'Completed Reviews Summary', reviewedData),
+  createSheetData(
+    'all-orders',
+    'All Orders',
+    'Q3 Financial Overview',
+    q3FinancialData
+  ),
+  createSheetData(
+    'pending',
+    'Pending',
+    'Pending Review Dashboard',
+    pendingData
+  ),
+  createSheetData(
+    'reviewed',
+    'Reviewed',
+    'Completed Reviews Summary',
+    reviewedData
+  ),
   createSheetData('arrived', 'Arrived', 'New Arrivals Tracking', arrivedData),
 ];
 
@@ -231,6 +256,7 @@ export const saveSheetsToStorage = (sheets: SheetData[]) => {
   try {
     localStorage.setItem(SHEETS_STORAGE_KEY, JSON.stringify(sheets));
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to save sheets to localStorage:', error);
   }
 };
@@ -243,6 +269,7 @@ export const loadSheetsFromStorage = (): SheetData[] => {
       return JSON.parse(stored);
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to load sheets from localStorage:', error);
   }
   return sheetData;
@@ -253,6 +280,7 @@ export const saveActiveSheet = (sheetId: string) => {
   try {
     localStorage.setItem(ACTIVE_SHEET_KEY, sheetId);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to save active sheet to localStorage:', error);
   }
 };
@@ -262,6 +290,7 @@ export const loadActiveSheet = (): string => {
   try {
     return localStorage.getItem(ACTIVE_SHEET_KEY) || 'all-orders';
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to load active sheet from localStorage:', error);
     return 'all-orders';
   }
@@ -282,4 +311,4 @@ export const createNewSheet = (index: number): SheetData => {
     data: createEmptyData(100),
     extraColumns: [],
   };
-}; 
+};

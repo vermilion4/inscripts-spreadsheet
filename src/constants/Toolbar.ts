@@ -36,12 +36,12 @@ export const importTemplates = [
         priority: 'Medium',
         due: '10-12-2024',
         value: '4,750,000',
-      }
+      },
     ],
-    extraColumns: []
+    extraColumns: [],
   },
   {
-    id: 'template-2', 
+    id: 'template-2',
     name: 'Pending Reviews',
     title: 'Pending Review Dashboard',
     data: [
@@ -77,9 +77,9 @@ export const importTemplates = [
         priority: 'High',
         due: '15-12-2024',
         value: '7,800,000',
-      }
+      },
     ],
-    extraColumns: []
+    extraColumns: [],
   },
   {
     id: 'template-3',
@@ -118,8 +118,8 @@ export const importTemplates = [
         priority: 'Low',
         due: '30-11-2024',
         value: '2,300,000',
-      }
+      },
     ],
-    extraColumns: []
-  }
-]
+    extraColumns: [],
+  },
+];

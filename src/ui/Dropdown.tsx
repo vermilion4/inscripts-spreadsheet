@@ -25,7 +25,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   position = 'bottom',
   width = 'w-64',
   className = '',
-  triggerClassName = ''
+  triggerClassName = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -33,8 +33,12 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -83,26 +87,26 @@ const Dropdown: React.FC<DropdownProps> = ({
       >
         {trigger}
       </div>
-      
+
       {isOpen && (
         <div
           ref={dropdownRef}
           className={`absolute z-[100] bg-white shadow-lg rounded-md border border-borderTertiary ${width} ${getPositionClasses()}`}
         >
           <div className="py-1">
-            {items.map((item, index) => (
+            {items.map(item => (
               <React.Fragment key={item.id}>
                 {item.divider ? (
                   <div className="border-t border-borderTertiary my-1" />
                 ) : (
-                                     <div
-                     className={`px-3 py-2 text-sm transition-colors ${
-                       item.disabled 
-                         ? 'opacity-50 cursor-not-allowed' 
-                         : 'cursor-pointer hover:bg-gray-100'
-                     }`}
-                     onClick={() => handleItemClick(item)}
-                   >
+                  <div
+                    className={`px-3 py-2 text-sm transition-colors ${
+                      item.disabled
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'cursor-pointer hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleItemClick(item)}
+                  >
                     {item.customComponent ? (
                       item.customComponent
                     ) : (
@@ -128,4 +132,4 @@ const Dropdown: React.FC<DropdownProps> = ({
   );
 };
 
-export default Dropdown; 
+export default Dropdown;
