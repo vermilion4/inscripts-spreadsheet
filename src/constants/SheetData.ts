@@ -256,7 +256,6 @@ export const saveSheetsToStorage = (sheets: SheetData[]) => {
   try {
     localStorage.setItem(SHEETS_STORAGE_KEY, JSON.stringify(sheets));
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to save sheets to localStorage:', error);
   }
 };
@@ -269,7 +268,6 @@ export const loadSheetsFromStorage = (): SheetData[] => {
       return JSON.parse(stored);
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to load sheets from localStorage:', error);
   }
   return sheetData;
@@ -280,7 +278,6 @@ export const saveActiveSheet = (sheetId: string) => {
   try {
     localStorage.setItem(ACTIVE_SHEET_KEY, sheetId);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to save active sheet to localStorage:', error);
   }
 };
@@ -290,7 +287,6 @@ export const loadActiveSheet = (): string => {
   try {
     return localStorage.getItem(ACTIVE_SHEET_KEY) || 'all-orders';
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to load active sheet from localStorage:', error);
     return 'all-orders';
   }

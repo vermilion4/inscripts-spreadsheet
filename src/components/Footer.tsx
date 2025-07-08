@@ -9,9 +9,7 @@ import {
 interface FooterProps {
   sheets: SheetData[];
   activeSheetId: string;
-  // eslint-disable-next-line no-unused-vars
   onSheetChange?: (sheet: SheetData) => void;
-  // eslint-disable-next-line no-unused-vars
   onSheetsChange?: (newSheets: SheetData[]) => void;
 }
 

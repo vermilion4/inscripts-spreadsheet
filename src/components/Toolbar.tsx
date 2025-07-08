@@ -72,9 +72,7 @@ const ToolbarButton = ({
 
 interface ToolbarProps {
   activeSheet?: SheetData | null;
-  // eslint-disable-next-line no-unused-vars
   onImportSheet?: (sheet: SheetData) => void;
-  // eslint-disable-next-line no-unused-vars
   onExportSheet?: (sheet: SheetData) => void;
 }
 
@@ -105,7 +103,6 @@ const Toolbar = ({
       newActiveTools.add(toolLabel);
     }
     setActiveTools(newActiveTools);
-    // eslint-disable-next-line no-console
     console.log(
       `${toolLabel} ${newActiveTools.has(toolLabel) ? 'activated' : 'deactivated'}`
     );
@@ -131,7 +128,6 @@ const Toolbar = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Failed to copy link:', err);
     }
   };

@@ -23,10 +23,8 @@ import { SheetData } from '../constants/SheetData';
 
 interface SpreadsheetTableProps {
   sheetData?: SheetData;
-  // eslint-disable-next-line no-unused-vars
   onDataChange?: (data: RowData[]) => void;
   onExtraColumnsChange?: (
-    // eslint-disable-next-line no-unused-vars
     extraColumns: { id: string; title: string }[]
   ) => void;
 }
@@ -78,7 +76,7 @@ function formatLakh(value: string) {
   const formattedValue = Number(numericValue).toLocaleString('en-US');
   return (
     <>
-      {formattedValue} <span className="text-disabledPrimary">₹</span>
+      {formattedValue} <span className="text-disabledPrimary ml-1">₹</span>
     </>
   );
 }
@@ -87,14 +85,12 @@ interface EditableCellProps {
   value: string;
   rowIndex: number;
   columnId: string;
-  // eslint-disable-next-line no-unused-vars
   onChange: (row: number, column: string, value: string) => void;
   isUrl?: boolean;
   isStatus?: boolean;
   isPriority?: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
-  // eslint-disable-next-line no-unused-vars
   renderValue?: (value: string) => React.ReactNode;
   align?: 'left' | 'right' | 'center';
 }
@@ -215,7 +211,7 @@ function EditableCell({
       return (
         <select
           ref={selectRef}
-          className={`font-semibold w-[90%] border-0 outline-none bg-transparent mx-auto flex ${priorityColors[inputValue] || ''}`}
+          className={`px-2 py-1 font-semibold w-[90%] border-0 outline-none bg-transparent mx-auto flex ${priorityColors[inputValue] || ''}`}
           value={inputValue}
           onChange={e => {
             setInputValue(e.target.value);
@@ -240,7 +236,7 @@ function EditableCell({
     return (
       <input
         ref={inputRef}
-        className={`w-full h-full px-2 py-0.5 border border-[#6C8B70] focus:outline-none bg-white shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0px_4px_-2px_#0A6E3D99] ${align === 'right' ? 'text-right' : ''}`}
+        className={`w-full h-full px-2 py-1 border border-[#6C8B70] focus:outline-none bg-white shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0px_4px_-2px_#0A6E3D99] ${align === 'right' ? 'text-right' : ''}`}
         value={inputValue}
         onChange={e => setInputValue(e.target.value)}
         onBlur={finishEditing}
@@ -272,7 +268,7 @@ function EditableCell({
     if (isPriority && value) {
       return (
         <span
-          className={`font-semibold flex justify-center ${priorityColors[value] || ''}`}
+          className={`font-semibold flex mx-auto justify-center ${priorityColors[value] || ''}`}
         >
           {value}
         </span>
@@ -303,14 +299,14 @@ function EditableCell({
   return (
     <div
       ref={displayRef}
-      className={`w-full h-full flex items-center px-2 py-1 cursor-pointer ${isSelected ? 'border border-[#6C8B70] shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0px_4px_-2px_#0A6E3D99] bg-white ' : 'hover:bg-[#E8F0E9]'} ${align === 'right' ? 'justify-end' : ''}`}
+      className={`w-full h-full min-h-[2rem] flex items-center cursor-pointer ${isSelected ? 'border border-[#6C8B70] shadow-[0px_0px_12px_0px_#0A6E3D38,0px_0A6E3D99] bg-white ' : 'hover:bg-[#E8F0E9]'} ${align === 'right' ? 'justify-end' : ''}`}
       onClick={handleCellClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
       <span
-        className={`block w-full truncate ${align === 'right' ? 'text-right' : ''}`}
+        className={`w-full truncate h-full flex items-center px-2 py-1 ${align === 'right' ? 'justify-end' : ''}`}
       >
         {cellContent()}
       </span>
@@ -663,7 +659,10 @@ export default function SpreadsheetTable({
   });
 
   return (
-    <div className="overflow-x-auto bg-white" ref={scrollRef}>
+    <div
+      className="overflow-x-auto bg-white [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      ref={scrollRef}
+    >
       <table className="w-full relative" style={{ borderCollapse: 'collapse' }}>
         <thead>
           {/* Custom top header row */}
