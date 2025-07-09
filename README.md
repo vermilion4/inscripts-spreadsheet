@@ -51,20 +51,20 @@ _Get embed code for the spreadsheet_
 
 ### UI/UX Features
 
-- **Responsive Design**: Works on desktop and mobile devices and column resizing
+- **Responsive Design**: Works on desktop and mobile devices
 - **Modern UI**: Clean, professional interface with Tailwind CSS styling
 - **Toolbar Actions**: Quick access to common functions (Hide fields, Sort, Filter, Cell view)
 - **Modal System**: Intuitive modals for complex operations
 - **Tooltips & Popovers**: Contextual help and information
-- **Keyboard Navigation**: Full keyboard support for power users
+- **Keyboard Navigation**: Partial keyboard support for power users
 
 ### Advanced Features
 
-- **Status Management**: Color-coded status indicators (In-process, Need to start, Complete, Blocked)
+- **Status Management**: Colour-coded status indicators (In-process, Need to start, Complete, Blocked)
 - **Priority System**: Visual priority indicators (High, Medium, Low)
 - **URL Handling**: Clickable URLs with external link indicators
 - **Value Formatting**: Automatic formatting for currency values (₹)
-- **Row Selection**: Visual feedback for selected cells and rows
+- **Column Selection**: Visual feedback for selected cells and columns
 - **Sharing & Collaboration**: Share spreadsheets via email, copy links, and embed in websites
 
 ## 🛠️ Setup & Installation
@@ -99,6 +99,7 @@ npm test           # Run tests
 npm run lint       # Run ESLint
 npm run lint:fix   # Fix ESLint issues
 npm run format     # Format code with Prettier
+npm run format:check # Check if code is properly formatted
 npm run type-check # Run TypeScript type checking
 ```
 
